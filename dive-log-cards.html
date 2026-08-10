@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>다이브 로그 카드 시안</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+  :root{
+    --abyss:#04141A;
+    --deep:#0A2E39;
+    --mid:#0F5A64;
+    --shal:#1E9AA0;
+    --foam:#C3EDE6;
+    --paper:#E9F4F2;
+    --amber:#FF7A2F;
+    --line:rgba(195,237,230,.18);
+
+    --mono:"IBM Plex Mono",monospace;
+    --kr:"Pretendard Variable",Pretendard,-apple-system,sans-serif;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+
+  body{
+    background:var(--abyss);
+    color:var(--paper);
+    font-family:var(--kr);
+    padding:56px 24px 96px;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- page header ---------- */
+  .head{max-width:1080px;margin:0 auto 64px;}
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--shal);margin-bottom:18px;
+  }
+  .head h1{
+    font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.3;
+    margin-bottom:14px;
+  }
+  .head p{
+    font-size:14.5px;line-height:1.75;color:rgba(233,244,242,.62);max-width:52ch;
+  }
+
+  /* ---------- grid ---------- */
+  .wrap{max-width:1080px;margin:0 auto;}
+
+  .row{margin-bottom:72px;}
+  .rowhead{
+    display:flex;align-items:baseline;gap:14px;
+    padding-bottom:14px;margin-bottom:26px;
+    border-bottom:1px solid var(--line);
+  }
+  .rowhead .tag{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;
+    color:var(--amber);text-transform:uppercase;
+  }
+  .rowhead h2{font-size:17px;font-weight:600;letter-spacing:-.01em;}
+  .rowhead .note{
+    font-size:13px;color:rgba(233,244,242,.5);margin-left:auto;
+  }
+
+  .pair{
+    display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:28px;
+  }
+  .slot .caption{
+    font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+    color:rgba(233,244,242,.45);margin-bottom:12px;text-transform:uppercase;
+  }
+
+  /* ---------- card shell ---------- */
+  .card{
+    position:relative;width:100%;aspect-ratio:9/16;
+    border-radius:20px;overflow:hidden;
+    background:var(--deep);
+    box-shadow:0 24px 60px rgba(0,0,0,.5);
+    isolation:isolate;
+  }
+
+  /* water column for photoless cards */
+  .column{
+    position:absolute;inset:0;
+    background:
+      radial-gradient(120% 68% at 50% -12%, rgba(195,237,230,.30) 0%, rgba(30,154,160,.16) 34%, rgba(0,0,0,0) 62%),
+      linear-gradient(180deg,#0D4E58 0%, #0A323C 46%, #051920 100%);
+  }
+  .caustic{
+    position:absolute;inset:-20% -20% auto -20%;height:62%;
+    background:
+      repeating-linear-gradient(102deg, rgba(195,237,230,.11) 0px, rgba(195,237,230,.11) 2px, transparent 2px, transparent 26px),
+      repeating-linear-gradient(78deg, rgba(195,237,230,.08) 0px, rgba(195,237,230,.08) 1px, transparent 1px, transparent 19px);
+    mix-blend-mode:screen;
+    -webkit-mask-image:linear-gradient(180deg,#000 0%,transparent 100%);
+            mask-image:linear-gradient(180deg,#000 0%,transparent 100%);
+    animation:drift 14s ease-in-out infinite alternate;
+  }
+  @keyframes drift{
+    from{transform:translate3d(-2%,0,0) skewX(0deg);}
+    to{transform:translate3d(3%,1.5%,0) skewX(1.4deg);}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .caustic{animation:none;}
+  }
+
+  .photo{position:absolute;inset:0;}
+  .photo svg{width:100%;height:100%;display:block;}
+  .scrim{
+    position:absolute;inset:0;
+    background:linear-gradient(180deg, rgba(4,20,26,.62) 0%, rgba(4,20,26,0) 26%, rgba(4,20,26,.30) 56%, rgba(4,20,26,.92) 100%);
+  }
+
+  /* ---------- card content ---------- */
+  .inner{
+    position:absolute;inset:0;
+    padding:26px 24px 26px 52px;
+    display:flex;flex-direction:column;
+  }
+
+  .meta{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+  .place{font-size:15px;font-weight:600;letter-spacing:-.01em;}
+  .region{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    color:rgba(233,244,242,.58);margin-top:5px;text-transform:uppercase;
+  }
+  .date{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    color:rgba(233,244,242,.58);text-align:right;white-space:nowrap;
+  }
+
+  .hero{margin-top:auto;}
+  .kicker{
+    font-family:var(--mono);font-size:10px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--amber);margin-bottom:10px;
+  }
+  .kicker.cool{color:var(--foam);opacity:.72;}
+
+  .figure{
+    font-family:var(--mono);font-weight:300;
+    font-size:76px;line-height:.86;letter-spacing:-.045em;
+    display:flex;align-items:baseline;gap:6px;
+  }
+  .figure .unit{font-size:22px;font-weight:400;letter-spacing:0;opacity:.66;}
+  .figure .ord{font-size:19px;font-weight:400;letter-spacing:-.01em;opacity:.7;font-family:var(--kr);}
+
+  .species{
+    font-size:38px;font-weight:600;line-height:1.12;letter-spacing:-.03em;
+  }
+  .species .sci{
+    display:block;font-family:var(--mono);font-size:11px;font-weight:300;
+    letter-spacing:.1em;opacity:.55;margin-top:9px;font-style:italic;
+  }
+
+  .strip{
+    display:flex;gap:0;margin-top:20px;padding-top:14px;
+    border-top:1px solid var(--line);
+  }
+  .cell{flex:1;min-width:0;}
+  .cell + .cell{padding-left:12px;}
+  .cell .k{
+    font-family:var(--mono);font-size:9px;letter-spacing:.16em;
+    text-transform:uppercase;color:rgba(233,244,242,.42);margin-bottom:6px;
+  }
+  .cell .v{
+    font-family:var(--mono);font-size:14px;font-weight:400;letter-spacing:-.01em;
+  }
+  .cell .v small{font-size:10px;opacity:.6;margin-left:1px;}
+
+  /* ---------- depth ruler (signature) ---------- */
+  .ruler{
+    position:absolute;left:0;top:0;bottom:0;width:52px;
+    padding:26px 0;
+  }
+  .ruler .axis{
+    position:absolute;left:25px;top:26px;bottom:26px;width:1px;
+    background:linear-gradient(180deg, rgba(195,237,230,.45), rgba(195,237,230,.06));
+  }
+  .tick{
+    position:absolute;left:19px;width:13px;height:1px;
+    background:rgba(195,237,230,.30);
+  }
+  .tick.major{left:15px;width:17px;background:rgba(195,237,230,.5);}
+  .tick span{
+    position:absolute;left:-9px;top:-4px;
+    font-family:var(--mono);font-size:8px;letter-spacing:.04em;
+    color:rgba(195,237,230,.45);
+  }
+  .mark{
+    position:absolute;left:19px;width:14px;height:14px;
+    transform:translateY(-7px);
+  }
+  .mark::before{
+    content:"";position:absolute;inset:4px;border-radius:50%;
+    background:var(--amber);
+  }
+  .mark::after{
+    content:"";position:absolute;inset:0;border-radius:50%;
+    border:1px solid var(--amber);opacity:.45;
+  }
+  .markline{
+    position:absolute;left:33px;height:1px;right:-2px;
+    background:linear-gradient(90deg,var(--amber),rgba(255,122,47,0));
+    opacity:.5;
+  }
+
+  /* ---------- notes under grid ---------- */
+  .foot{
+    max-width:1080px;margin:24px auto 0;
+    border-top:1px solid var(--line);padding-top:28px;
+  }
+  .foot h3{font-size:15px;font-weight:600;margin-bottom:16px;}
+  .foot ul{list-style:none;display:grid;gap:12px;}
+  .foot li{
+    font-size:13.5px;line-height:1.7;color:rgba(233,244,242,.62);
+    padding-left:20px;position:relative;
+  }
+  .foot li::before{
+    content:"";position:absolute;left:0;top:9px;
+    width:7px;height:7px;border-radius:50%;
+    border:1px solid var(--amber);opacity:.7;
+  }
+  .foot b{color:var(--paper);font-weight:600;}
+
+  @media (max-width:720px){
+    body{padding:36px 16px 72px;}
+    .pair{grid-template-columns:1fr;gap:36px;}
+    .head h1{font-size:24px;}
+    .rowhead{flex-wrap:wrap;}
+    .rowhead .note{margin-left:0;width:100%;}
+    .figure{font-size:68px;}
+  }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <div class="eyebrow">Dive log — card layouts</div>
+  <h1>로그 카드 6종</h1>
+  <p>세로 9:16, 스토리 그대로 올라가는 비율입니다. 왼쪽은 사진이 있을 때, 오른쪽은 사진이 없을 때. 왼쪽 눈금자는 수심 축이고 주황 점이 그날의 최대 수심입니다 — 숫자를 못 읽어도 얼마나 깊이 들어갔는지 한눈에 보입니다.</p>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ 1. 수심형 ============ -->
+  <div class="row">
+    <div class="rowhead">
+      <span class="tag">Freedive</span>
+      <h2>수심형</h2>
+      <span class="note">프리다이빙 기본값</span>
+    </div>
+    <div class="pair">
+
+      <!-- photo -->
+      <div class="slot">
+        <div class="caption">사진 있음</div>
+        <div class="card">
+          <div class="photo">
+            <svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <linearGradient id="w1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#2FA9AC"/>
+                  <stop offset="38%" stop-color="#0F5A64"/>
+                  <stop offset="100%" stop-color="#04141A"/>
+                </linearGradient>
+                <radialGradient id="sun1" cx="52%" cy="2%" r="58%">
+                  <stop offset="0%" stop-color="#EAFBF6" stop-opacity=".85"/>
+                  <stop offset="55%" stop-color="#7FDCD4" stop-opacity=".18"/>
+                  <stop offset="100%" stop-color="#7FDCD4" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect width="360" height="640" fill="url(#w1)"/>
+              <rect width="360" height="640" fill="url(#sun1)"/>
+              <g opacity=".30" fill="#DFFAF3">
+                <polygon points="176,0 202,0 150,330 138,330"/>
+                <polygon points="212,0 224,0 196,300 186,300"/>
+                <polygon points="128,0 140,0 108,280 100,280"/>
+              </g>
+              <!-- freediver silhouette, descending head-down -->
+              <g fill="#031015" opacity=".82" transform="translate(196,268) rotate(190)">
+                <ellipse cx="0" cy="0" rx="11" ry="13"/>
+                <path d="M-8,10 C-11,44 -9,76 -5,104 L7,104 C11,74 12,42 9,10 Z"/>
+                <path d="M-8,18 C-22,32 -30,54 -33,74 L-27,77 C-22,58 -15,40 -5,28 Z"/>
+                <path d="M9,18 C23,32 31,54 34,74 L28,77 C23,58 16,40 6,28 Z"/>
+                <path d="M-5,104 C-7,128 -6,148 -3,164 L3,164 C6,146 7,126 5,104 Z"/>
+                <path d="M-3,164 L-13,186 L-6,188 L0,170 L6,188 L13,186 L3,164 Z"/>
+              </g>
+              <g fill="#DFFAF3" opacity=".35">
+                <circle cx="238" cy="392" r="2.5"/><circle cx="252" cy="356" r="1.8"/>
+                <circle cx="228" cy="330" r="1.4"/><circle cx="96" cy="430" r="2"/>
+                <circle cx="82" cy="392" r="1.5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="scrim"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:282px"></div>
+            <div class="mark" style="top:282px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">문섬 새끼섬</div>
+                <div class="region">Seogwipo · Jeju</div>
+              </div>
+              <div class="date">2026.08.02<br>14:20</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">Max depth</div>
+              <div class="figure">24.5<span class="unit">m</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Time</div><div class="v">2<small>:</small>08</div></div>
+                <div class="cell"><div class="k">Temp</div><div class="v">23<small>°C</small></div></div>
+                <div class="cell"><div class="k">Vis</div><div class="v">15<small>m</small></div></div>
+                <div class="cell"><div class="k">종목</div><div class="v">CWT</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- no photo -->
+      <div class="slot">
+        <div class="caption">사진 없음</div>
+        <div class="card">
+          <div class="column"></div>
+          <div class="caustic"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:282px"></div>
+            <div class="mark" style="top:282px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">문섬 새끼섬</div>
+                <div class="region">Seogwipo · Jeju</div>
+              </div>
+              <div class="date">2026.08.02<br>14:20</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">Max depth</div>
+              <div class="figure">24.5<span class="unit">m</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Time</div><div class="v">2<small>:</small>08</div></div>
+                <div class="cell"><div class="k">Temp</div><div class="v">23<small>°C</small></div></div>
+                <div class="cell"><div class="k">Vis</div><div class="v">15<small>m</small></div></div>
+                <div class="cell"><div class="k">종목</div><div class="v">CWT</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 2. 횟수형 ============ -->
+  <div class="row">
+    <div class="rowhead">
+      <span class="tag">Scuba</span>
+      <h2>횟수형</h2>
+      <span class="note">스쿠버 기본값 · 누적이 자산이 되는 구조</span>
+    </div>
+    <div class="pair">
+
+      <div class="slot">
+        <div class="caption">사진 있음</div>
+        <div class="card">
+          <div class="photo">
+            <svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <linearGradient id="w2" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#1E8E9C"/>
+                  <stop offset="42%" stop-color="#0C4652"/>
+                  <stop offset="100%" stop-color="#031016"/>
+                </linearGradient>
+                <radialGradient id="sun2" cx="30%" cy="0%" r="62%">
+                  <stop offset="0%" stop-color="#E4F9F4" stop-opacity=".7"/>
+                  <stop offset="100%" stop-color="#7FDCD4" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect width="360" height="640" fill="url(#w2)"/>
+              <rect width="360" height="640" fill="url(#sun2)"/>
+              <!-- reef floor -->
+              <path d="M0,470 C60,442 96,486 150,470 C208,452 250,492 300,472 C330,460 348,470 360,462 L360,640 L0,640 Z" fill="#02090D" opacity=".85"/>
+              <g fill="#02090D" opacity=".7">
+                <path d="M62,472 C58,440 74,428 70,406 C86,420 92,444 88,472 Z"/>
+                <path d="M268,474 C262,446 278,432 272,412 C292,428 298,450 294,474 Z"/>
+              </g>
+              <!-- scuba diver silhouette -->
+              <g fill="#02090D" opacity=".85" transform="translate(150,300) rotate(-8)">
+                <ellipse cx="0" cy="0" rx="12" ry="10"/>
+                <rect x="-4" y="-16" width="22" height="26" rx="7"/>
+                <path d="M-12,8 C-16,30 -14,52 -8,68 L14,66 C18,48 18,26 14,8 Z"/>
+                <path d="M-12,20 C-30,26 -44,34 -56,42 L-52,49 C-38,42 -24,36 -10,32 Z"/>
+                <path d="M14,20 C30,24 42,30 52,38 L48,45 C36,38 24,34 12,32 Z"/>
+                <path d="M-8,68 C-10,86 -8,102 -4,114 L10,112 C14,100 16,84 14,66 Z"/>
+                <path d="M-4,114 L-16,132 L-8,136 L2,120 L12,134 L20,130 L10,112 Z"/>
+              </g>
+              <g fill="#DFFAF3" opacity=".4">
+                <circle cx="172" cy="272" r="3"/><circle cx="182" cy="248" r="4.5"/>
+                <circle cx="176" cy="216" r="3.5"/><circle cx="190" cy="188" r="6"/>
+                <circle cx="182" cy="150" r="4"/><circle cx="196" cy="118" r="7"/>
+              </g>
+            </svg>
+          </div>
+          <div class="scrim"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:230px"></div>
+            <div class="mark" style="top:230px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">섶섬 큰안통</div>
+                <div class="region">Seogwipo · Jeju</div>
+              </div>
+              <div class="date">2026.07.19<br>10:05</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">Logged dive</div>
+              <div class="figure">312<span class="ord">번째</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Depth</div><div class="v">18<small>m</small></div></div>
+                <div class="cell"><div class="k">Time</div><div class="v">42<small>분</small></div></div>
+                <div class="cell"><div class="k">Temp</div><div class="v">21<small>°C</small></div></div>
+                <div class="cell"><div class="k">Air</div><div class="v">50<small>bar</small></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="caption">사진 없음 · 공기압도 기억 안 남</div>
+        <div class="card">
+          <div class="column"></div>
+          <div class="caustic"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:230px"></div>
+            <div class="mark" style="top:230px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">섶섬 큰안통</div>
+                <div class="region">Seogwipo · Jeju</div>
+              </div>
+              <div class="date">2026.07.19</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">Logged dive</div>
+              <div class="figure">312<span class="ord">번째</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Depth</div><div class="v">18<small>m</small></div></div>
+                <div class="cell"><div class="k">Time</div><div class="v">42<small>분</small></div></div>
+                <div class="cell"><div class="k">Temp</div><div class="v">21<small>°C</small></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ 3. 생물형 ============ -->
+  <div class="row">
+    <div class="rowhead">
+      <span class="tag">Highlight</span>
+      <h2>생물형</h2>
+      <span class="note">하트 누른 날만 · 수심과 횟수를 밀어냄</span>
+    </div>
+    <div class="pair">
+
+      <div class="slot">
+        <div class="caption">사진 있음</div>
+        <div class="card">
+          <div class="photo">
+            <svg viewBox="0 0 360 640" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <defs>
+                <linearGradient id="w3" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#3CB6B4"/>
+                  <stop offset="45%" stop-color="#116069"/>
+                  <stop offset="100%" stop-color="#03121A"/>
+                </linearGradient>
+                <radialGradient id="sun3" cx="62%" cy="-4%" r="66%">
+                  <stop offset="0%" stop-color="#F1FDF9" stop-opacity=".9"/>
+                  <stop offset="48%" stop-color="#8FE4DA" stop-opacity=".2"/>
+                  <stop offset="100%" stop-color="#8FE4DA" stop-opacity="0"/>
+                </radialGradient>
+              </defs>
+              <rect width="360" height="640" fill="url(#w3)"/>
+              <rect width="360" height="640" fill="url(#sun3)"/>
+              <g opacity=".26" fill="#F1FDF9">
+                <polygon points="228,0 250,0 196,296 184,296"/>
+                <polygon points="150,0 162,0 122,258 112,258"/>
+              </g>
+              <!-- dolphin silhouette -->
+              <g fill="#02090D" opacity=".86" transform="translate(74,286) rotate(-12)">
+                <path d="M0,44 C24,10 78,-8 128,2 C158,8 178,22 196,36 C206,44 214,50 224,52 C212,60 198,62 186,58 C170,72 146,84 118,86 C80,88 40,74 14,58 C6,54 2,50 0,44 Z"/>
+                <path d="M96,4 C104,-16 118,-30 134,-34 C128,-18 124,-6 122,4 Z"/>
+                <path d="M64,70 C58,86 60,102 68,114 C70,98 76,84 84,76 Z"/>
+                <path d="M228,44 C244,34 258,32 270,36 C258,44 250,54 246,64 C240,56 234,48 228,44 Z"/>
+              </g>
+              <g fill="#DFFAF3" opacity=".3">
+                <circle cx="286" cy="420" r="2"/><circle cx="300" cy="386" r="1.6"/>
+                <circle cx="60" cy="446" r="2.4"/><circle cx="44" cy="404" r="1.4"/>
+              </g>
+            </svg>
+          </div>
+          <div class="scrim"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:104px"></div>
+            <div class="mark" style="top:104px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">대정 앞바다</div>
+                <div class="region">Daejeong · Jeju</div>
+              </div>
+              <div class="date">2026.06.28<br>07:40</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">오늘의 하이라이트</div>
+              <div class="species">남방큰돌고래<span class="sci">Tursiops aduncus · 4개체</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Depth</div><div class="v">7<small>m</small></div></div>
+                <div class="cell"><div class="k">Time</div><div class="v">36<small>분</small></div></div>
+                <div class="cell"><div class="k">Temp</div><div class="v">22<small>°C</small></div></div>
+                <div class="cell"><div class="k">Dive</div><div class="v">308</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="caption">사진 없음 · 이름만 크게</div>
+        <div class="card">
+          <div class="column"></div>
+          <div class="caustic"></div>
+
+          <div class="ruler">
+            <div class="axis"></div>
+            <div class="tick major" style="top:26px"><span>0</span></div>
+            <div class="tick" style="top:141px"></div>
+            <div class="tick major" style="top:256px"><span>20</span></div>
+            <div class="tick" style="top:371px"></div>
+            <div class="tick major" style="top:486px"><span>40</span></div>
+            <div class="markline" style="top:196px"></div>
+            <div class="mark" style="top:196px"></div>
+          </div>
+
+          <div class="inner">
+            <div class="meta">
+              <div>
+                <div class="place">문섬 한계창</div>
+                <div class="region">Seogwipo · Jeju</div>
+              </div>
+              <div class="date">2026.05.11</div>
+            </div>
+            <div class="hero">
+              <div class="kicker">오늘의 하이라이트</div>
+              <div class="species">가시해마<span class="sci">Hippocampus histrix · 처음 봄</span></div>
+              <div class="strip">
+                <div class="cell"><div class="k">Depth</div><div class="v">15<small>m</small></div></div>
+                <div class="cell"><div class="k">Time</div><div class="v">44<small>분</small></div></div>
+                <div class="cell"><div class="k">Dive</div><div class="v">287</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="foot">
+    <h3>이 시안에 들어간 결정들</h3>
+    <ul>
+      <li><b>빈칸은 그냥 사라집니다.</b> 오른쪽 아래 카드들을 보면 칸이 4개가 아니라 3개예요. 공기압이나 시야를 안 적어도 레이아웃이 무너지지 않고, 남은 칸이 늘어나 자리를 채웁니다. 무엇을 안 적었는지 카드에 티가 나지 않는 게 핵심입니다.</li>
+      <li><b>사진이 없으면 수심이 배경이 됩니다.</b> 같은 물빛이 아니라, 깊이 들어간 날일수록 아래쪽이 어두워지는 물기둥이에요. 정보가 적을수록 그래픽이 대신 말하게 했습니다.</li>
+      <li><b>왼쪽 눈금자가 이 앱의 서명입니다.</b> 다른 로그 앱에는 없고, 스토리에서 작게 봐도 "얼마나 깊이"가 즉시 읽힙니다. 카드를 여러 장 붙여 보면 그날의 프로파일이 그려집니다.</li>
+      <li><b>주황은 한 곳에만 씁니다.</b> 물속에서 가장 먼저 사라지는 색이라 수면 밖 기록이라는 뜻이 되고, 파란 화면에서 눈이 딱 한 군데로 갑니다.</li>
+      <li><b>학명은 작게 깔되 빼도 됩니다.</b> "처음 봄" 같은 한마디가 들어갈 자리이기도 해요 — 여기가 사람들이 제일 많이 고쳐 쓸 칸입니다.</li>
+    </ul>
+  </div>
+
+</div>
+</body>
+</html>
