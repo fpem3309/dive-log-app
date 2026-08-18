@@ -12,7 +12,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { DiveCard } from '@/cards/DiveCard';
 import { EXPORT_H, EXPORT_W, exportRenderHeight, exportRenderWidth } from '@/design/scale';
-import { inkA } from '@/design/tokens';
 import { saveCardToLibrary } from '@/export/captureCard';
 import { padMD, tripTitle } from '@/model/dates';
 import type { Dive } from '@/model/types';
@@ -104,10 +103,6 @@ export default function TripCardsScreen() {
               <Button label="사진에 저장" onPress={() => onSave(d)} />
             </View>
           ))}
-
-          <Text style={[t.meta, { fontSize: 10.5, color: inkA(0.4), textAlign: 'center' }]}>
-            트립 요약 카드는 아직 없습니다
-          </Text>
         </View>
       </ScrollView>
 
