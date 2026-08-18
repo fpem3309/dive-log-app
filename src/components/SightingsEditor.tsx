@@ -39,9 +39,6 @@ export function SightingsEditor({ sightings, onChange, history }: Props) {
     setDraft('');
   };
 
-  const patch = (i: number, p: Partial<Sighting>) =>
-    onChange(sightings.map((s, k) => (k === i ? { ...s, ...p } : s)));
-
   const remove = (i: number) => onChange(sightings.filter((_, k) => k !== i));
 
   /** 하트는 하나만 — 카드 주인공이 둘일 수 없다 (§3) */

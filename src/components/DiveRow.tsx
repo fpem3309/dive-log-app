@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { hex, inkA } from '@/design/tokens';
+import { inkA } from '@/design/tokens';
 import { daysOfTrip, padMD, weekdayKr } from '@/model/dates';
 import type { Discipline, Dive, Trip } from '@/model/types';
 import { useTrips } from '@/store/TripStore';

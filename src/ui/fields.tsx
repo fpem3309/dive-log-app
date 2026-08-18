@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
-import { hex, inkA } from '@/design/tokens';
+import { inkA } from '@/design/tokens';
 import { sp, surface, t } from './theme';
 
 /**

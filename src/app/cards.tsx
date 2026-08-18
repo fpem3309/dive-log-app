@@ -11,9 +11,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Link } from 'expo-router';
 
 import { DiveCard } from '@/cards/DiveCard';
-import { EXPORT_H, EXPORT_W, exportRenderHeight, exportRenderWidth, makeScale } from '@/design/scale';
+import { EXPORT_H, EXPORT_W, exportRenderHeight, exportRenderWidth } from '@/design/scale';
 import { inkA } from '@/design/tokens';
-import { family, makeType } from '@/design/type';
+import { family } from '@/design/type';
 import { surface, t as tt } from '@/ui/theme';
 import { saveCardToLibrary } from '@/export/captureCard';
 import { fixtures, type Fixture } from '@/model/fixtures';
@@ -35,8 +35,6 @@ export default function Gallery() {
   const { notify } = useConfirm();
   const { width } = useWindowDimensions();
   const cardW = Math.min(width - PAD * 2, 380);
-  const s = makeScale(cardW);
-  const type = makeType(s);
 
   // 화면 밖 1080 렌더 — 저장 대상
   const shotRef = useRef<View>(null);
