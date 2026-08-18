@@ -452,3 +452,53 @@ await notify('저장했습니다', '1080×1920');
 사라져서, 오른쪽에 있어야 할 하트와 `›`가 제목 아래로 떨어졌다. DOM을 보니 `<a>`의
 computed style이 `padding:0; flex-direction:column` — style이 전달되지 않았다.
 **이동은 `router.push()`로 한다.** 눌러서 넘어가는 곳은 전부 그렇게 통일했다.
+
+---
+
+## 11. iOS 빌드가 갑자기 깨졌다면 — 경로의 공백
+
+**이 프로젝트는 공백이 든 경로에 있다** (`/Volumes/P31 2TB/…` — 볼륨 이름에 공백).
+Expo·React Native의 iOS 빌드 스크립트 몇 개가 경로를 따옴표로 감싸지 않아서 깨진다.
+세 곳을 패치해 뒀는데 **전부 재생성되는 디렉토리 안에 있어서 사라진다.**
+
+**사라지는 조건**
+- `npm install`, `npx expo install <pkg>` → ①② 소멸
+- `expo prebuild --clean` → ③ 소멸
+- 다른 머신에서 클론 → 전부 없음
+
+**증상 두 가지 — 두 번째가 고약하다**
+1. 빌드 실패: `bash: /Volumes/P31: No such file or directory`
+2. **빌드는 성공하는데** 앱 실행 시 빨간 화면:
+   `expo-linking needs access to the expo-constants manifest`
+   → ②가 조용히 `exit 0` 해서 `app.config`가 생성되지 않은 것이다. 빌드 로그에는
+   아무 흔적이 없으니 이 증상을 보면 바로 ②를 의심해라.
+
+**복구 — 세 곳 다 "따옴표 씌우기"가 전부다**
+
+① `node_modules/expo-constants/ios/EXConstants.podspec` (40행 근처)
+   `$PODS_TARGET_SRCROOT/…` 를 작은따옴표로 감싼다. `bash -c "문자열"`은 그 문자열을
+   명령줄로 파싱하므로 공백에서 쪼개진다.
+```ruby
+:script => "bash -l -c \"#{env_vars}'$PODS_TARGET_SRCROOT/../scripts/get-app-config-ios.sh'\"",
+```
+
+② `node_modules/expo-constants/scripts/get-app-config-ios.sh` (14행)
+   bash에서 인용 없는 `basename`은 `P31`을 돌려주고, `!= "Pods"` 조건에 걸려 조기 종료한다.
+```bash
+PROJECT_DIR_BASENAME=$(basename "$PROJECT_DIR")
+```
+
+③ `ios/app.xcodeproj/project.pbxproj` — "Bundle React Native code and images" 단계.
+   백틱 실행을 인용된 명령 치환으로 바꾼다.
+```
+"$("$NODE_BINARY" --print "require('path').dirname(require.resolve('react-native/package.json')) + '/scripts/react-native-xcode.sh'")"
+```
+
+①을 고친 뒤에는 `cd ios && pod install`을 다시 돌려야 Pods 프로젝트에 반영된다.
+
+**근본 해결 (아직 안 함)**
+- 볼륨 이름에서 공백 제거 (`diskutil rename "P31 2TB" "P31-2TB"`) — 가장 깔끔하다.
+  같은 디스크의 다른 프로젝트도 함께 해결된다. 스캔해 보니 셸 설정·LaunchAgent·심볼릭
+  링크에 이 경로를 박아 둔 곳은 없었고, 영향받는 건 `ios/Pods`의 절대경로 243개
+  (→ `pod install`로 해결)와 에디터 최근 항목 정도다.
+- 또는 `patch-package`로 ①②를 고정 (③은 별도).
