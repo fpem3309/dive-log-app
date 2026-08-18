@@ -1,4 +1,4 @@
-import { useMemo, useRef, type ReactNode } from 'react';
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, PanResponder, Platform, Pressable, Text, View } from 'react-native';
 
 import { dangerA, hex } from '@/design/tokens';
@@ -36,29 +36,43 @@ type Props = {
 };
 
 export function SwipeRow({ children, onPress, onDelete, label = '지우기' }: Props) {
-  const tx = useRef(new Animated.Value(0)).current;
+  /**
+   * `useRef(new Animated.Value(0)).current`가 아니다 — 렌더마다 Value를 새로 만들어
+   * 버리고, 렌더 중에 ref를 읽는다(react-hooks/refs). useState의 지연 초기화는
+   * 인스턴스를 한 번만 만들고 그대로 유지한다.
+   */
+  const [tx] = useState(() => new Animated.Value(0));
   const opened = useRef(false);
   const dragged = useRef(false);
 
-  const slideTo = (to: number) => {
-    opened.current = to !== 0;
-    Animated.spring(tx, {
-      toValue: to,
-      // 웹에는 네이티브 애니메이션 모듈이 없다
-      useNativeDriver: Platform.OS !== 'web',
-      bounciness: 0,
-      speed: 20,
-    }).start();
-  };
+  const slideTo = useCallback(
+    (to: number) => {
+      opened.current = to !== 0;
+      Animated.spring(tx, {
+        toValue: to,
+        // 웹에는 네이티브 애니메이션 모듈이 없다
+        useNativeDriver: Platform.OS !== 'web',
+        bounciness: 0,
+        speed: 20,
+      }).start();
+    },
+    [tx],
+  );
 
-  const endDrag = () => {
+  const endDrag = useCallback(() => {
     setTimeout(() => {
       dragged.current = false;
     }, TAP_GUARD_MS);
-  };
+  }, []);
 
+  /**
+   * react-hooks/refs를 여기서만 끈다. 규칙은 "렌더 중에 refs를 읽는 함수에 넘겼다"고
+   * 보지만, `PanResponder.create`는 핸들러를 모아 두기만 하고 부르지 않는다.
+   * `opened`·`dragged`를 읽는 곳은 전부 제스처 콜백 안이라 렌더가 아니다.
+   */
   const pan = useMemo(
     () =>
+      // eslint-disable-next-line react-hooks/refs
       PanResponder.create({
         // 탭은 아래 Pressable이 받는다
         onStartShouldSetPanResponderCapture: () => false,
@@ -83,8 +97,7 @@ export function SwipeRow({ children, onPress, onDelete, label = '지우기' }: P
           endDrag();
         },
       }),
-    // tx는 ref라 안 바뀐다
-    [tx],
+    [tx, slideTo, endDrag],
   );
 
   const handleTap = () => {

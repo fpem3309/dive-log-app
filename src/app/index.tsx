@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { hex, inkA } from '@/design/tokens';
+import { inkA } from '@/design/tokens';
 import { dateWithDay, tripTitle, yearOf } from '@/model/dates';
 import type { Trip } from '@/model/types';
 import { useTrips } from '@/store/TripStore';
