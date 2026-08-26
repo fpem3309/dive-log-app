@@ -19,23 +19,41 @@ const photoDir = () => {
   return dir;
 };
 
-/** 확장자만 뽑는다 — 쿼리스트링이 붙어 오는 경우가 있다 */
+/** 확장자만 뽑는다 — 쿼리스트링이 붙어 오는 경우가 있다 (소스 uri 기준) */
 const extOf = (uri: string) => {
   const tail = uri.split('/').pop() ?? '';
   const ext = tail.split('?')[0].split('.').pop();
   return ext && ext.length <= 5 ? ext : 'jpg';
 };
 
+/** 이 다이브가 쓰던 파일들 — 확장자가 뭐였든 전부 */
+const filesOf = (key: string) => {
+  try {
+    return photoDir()
+      .list()
+      .filter((f): f is File => f instanceof File && f.name.startsWith(`${key}.`));
+  } catch {
+    return [];
+  }
+};
+
 /**
  * @param sourceUri 피커가 준 uri
- * @param key 다이브 id — 다이브당 사진 1장이라 그대로 파일명으로 쓴다
+ * @param key 다이브 id — 다이브당 사진 1장이다
  * @returns 저장된 파일의 uri. 실패하면 원본 uri를 그대로 돌려준다
  *          (사진이 안 붙는 것보다는 캐시 경로라도 붙는 편이 낫다)
+ *
+ * ⚠️ 파일명에 타임스탬프를 붙인다. 예전엔 `${key}.${ext}`로 고정이었는데, 사진을 바꿔도
+ * **uri 문자열이 똑같아서** React는 prop이 안 바뀐 줄 알고, RN Image는 uri로 캐시한 옛
+ * 사진을 계속 보여줬다 — 사용자는 새 사진을 골랐는데 옛 사진이 그대로다.
+ * (덤으로 jpg→png처럼 확장자가 바뀌면 옛 파일이 영영 남았다.)
+ * 새 파일을 쓰기 전에 이 다이브의 옛 파일을 **확장자와 무관하게** 전부 치운다.
  */
 export function persistPhoto(sourceUri: string, key: string): string {
   try {
-    const dest = new File(photoDir(), `${key}.${extOf(sourceUri)}`);
-    if (dest.exists) dest.delete();
+    const dir = photoDir();
+    filesOf(key).forEach((f) => f.delete());
+    const dest = new File(dir, `${key}.${Date.now().toString(36)}.${extOf(sourceUri)}`);
     new File(sourceUri).copy(dest);
     return dest.uri;
   } catch {

@@ -6,7 +6,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { inkA } from '@/design/tokens';
 import { DateField } from '@/components/DateField';
 import { DiveRow } from '@/components/DiveRow';
-import { addDays, autoTripTitle, dateRange, diffDays, tripTitle } from '@/model/dates';
+import {
+  addDays,
+  autoTripTitle,
+  dateRange,
+  daysOfTrip,
+  diffDays,
+  padMD,
+  tripTitle,
+} from '@/model/dates';
 import { useTrips } from '@/store/TripStore';
 import { Button, Chip, Divider, Section } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
@@ -27,7 +35,7 @@ export default function TripScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { trips, updateTrip, deleteTrip, addDive, diveNumbers, ready } = useTrips();
   const trip = trips.find((tr) => tr.id === id);
-  const { confirm } = useConfirm();
+  const { confirm, notify } = useConfirm();
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editHeader, setEditHeader] = useState(false);
@@ -56,12 +64,58 @@ export default function TripScreen() {
   }
 
   const nights = Math.max(0, diffDays(trip.startDate, trip.endDate));
+  const lastDiveDate = dives[dives.length - 1]?.date;
+
+  /**
+   * 기간을 바꾸기 전에 다이브 날짜를 확인한다.
+   *
+   * 다이브 날짜 칩은 `daysOfTrip(startDate, endDate)`로 만들어지므로, 기간 밖으로 밀려난
+   * 다이브는 **자기 날짜에 해당하는 칩이 아예 없다.** 값은 저장소에 남아 있는데 화면에는
+   * 없고, 다른 칩을 누르는 순간 덮어써진다 — 사용자가 볼 수도 되돌릴 수도 없는 상태다.
+   *
+   * 그래서 데이터를 손대는 대신 **기간 쪽을 막는다.** 다이브 날짜를 먼저 옮기면 된다.
+   * 다만 눌렀는데 아무 일도 안 일어나면 고장으로 보이므로 왜 막혔는지 반드시 띄운다.
+   * 시작일을 뒤로 미는 경우(앞쪽 다이브가 밖으로 나감)도 같은 검사에 걸린다.
+   */
+  const applyRange = (startDate: string, endDate: string) => {
+    const out = dives.filter((d) => d.date < startDate || d.date > endDate);
+    if (out.length > 0) {
+      const days = [...new Set(out.map((d) => padMD(d.date)))];
+      const list = days.length > 3 ? `${days.slice(0, 3).join(', ')} 외 ${days.length - 3}일` : days.join(', ');
+      void notify(
+        '기간 밖에 남는 다이브가 있습니다',
+        `${list}에 적은 다이브 ${out.length}개가 기간 밖으로 밀려납니다. 그 다이브의 날짜를 먼저 옮기면 기간을 바꿀 수 있습니다.`,
+      );
+      return;
+    }
+    updateTrip(trip.id, { startDate, endDate });
+  };
+
+  /**
+   * 새로 만드는 다이브의 날짜를 트립 안으로 가둔다.
+   *
+   * 새 다이브는 마지막 다이브의 날짜를 물려받는데(탭 수를 줄이려는 것 — §10-⑭),
+   * 그 날짜가 기간 밖이면 **새 다이브도 태어나자마자 미아가 된다.** 자기 날짜에 해당하는
+   * 칩이 없어서 켜진 칩이 하나도 없는, 위에서 막으려던 바로 그 상태다.
+   * 기존 다이브의 날짜는 손대지 않는다 — 여기서 고르는 건 아직 없던 값뿐이다.
+   *
+   * 칩을 만드는 함수(`daysOfTrip`)의 결과에서 고른다. 시작·끝으로 직접 자르면
+   * 기간이 아주 긴 트립에서 칩이 60일로 잘리는 것과 어긋난다.
+   */
+  const tripDay = (iso: string) => {
+    const days = daysOfTrip(trip.startDate, trip.endDate);
+    const first = days[0] ?? trip.startDate;
+    const lastDay = days[days.length - 1] ?? first;
+    if (iso < first) return first;
+    if (iso > lastDay) return lastDay;
+    return iso;
+  };
 
   const onAddDive = () => {
     // 마지막 다이브와 같은 날·같은 종목으로 시작한다 — 연속 입력에서 탭 수를 줄인다
     const last = dives[dives.length - 1];
     const dive = addDive(trip.id, {
-      date: last?.date ?? trip.startDate,
+      date: tripDay(last?.date ?? trip.startDate),
       discipline: last?.discipline ?? 'scuba',
       site: '',
     });
@@ -135,12 +189,12 @@ export default function TripScreen() {
               <Field label="시작일">
                 <DateField
                   value={trip.startDate}
-                  onChange={(iso) =>
-                    updateTrip(trip.id, { startDate: iso, endDate: addDays(iso, nights) })
-                  }
+                  onChange={(iso) => applyRange(iso, addDays(iso, nights))}
                 />
               </Field>
-              <Field label="기간">
+              <Field
+                label="기간"
+                hint={lastDiveDate ? `${padMD(lastDiveDate)}까지 다이브가 적혀 있습니다` : undefined}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.sm }}>
                   {NIGHTS.map((n) => (
                     <Chip
@@ -148,7 +202,7 @@ export default function TripScreen() {
                       mono
                       label={n === 0 ? '당일' : `${n}박`}
                       selected={nights === n}
-                      onPress={() => updateTrip(trip.id, { endDate: addDays(trip.startDate, n) })}
+                      onPress={() => applyRange(trip.startDate, addDays(trip.startDate, n))}
                     />
                   ))}
                 </View>

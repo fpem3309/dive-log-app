@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Animated, PanResponder, Platform, Pressable, Text, View } from 'react-native';
 
 import { dangerA, hex } from '@/design/tokens';
@@ -17,7 +17,16 @@ import { surface, t } from './theme';
  * 그래서 드래그 직후의 탭은 여기서 막는다.
  *
  * 지우기를 눌러도 바로 지우지 않는다 — `onDelete`가 확인을 거치고, 취소하면 닫힌다.
+ *
+ * 열린 행은 **화면에 하나뿐이다.** 여럿이 열려 있으면 "지우기"가 여러 개 보여서 어느 것이
+ * 방금 민 것인지 헷갈리고, 실수로 다른 행을 지울 수 있다. 목록 컴포넌트가 상태를 들고
+ * 내려주는 방법도 있지만, 트립 목록·다이브 목록 두 곳이 같은 컴포넌트를 쓰므로
+ * (§10-㉔) 여기서 모듈 수준으로 관리하는 편이 호출부를 안 건드린다.
  */
+
+/** 지금 열려 있는 행. 화면에 하나만 열리게 하는 장치 */
+type Row = { close: () => void };
+let openRow: Row | null = null;
 
 const ACTION_W = 96;
 /** 이 이상 밀어야 열린다 */
@@ -44,9 +53,24 @@ export function SwipeRow({ children, onPress, onDelete, label = '지우기' }: P
   const [tx] = useState(() => new Animated.Value(0));
   const opened = useRef(false);
   const dragged = useRef(false);
+  /**
+   * 이 행의 신원. `openRow`와 `===`로 비교하고 닫는 함수도 여기 담는다.
+   * ref 안의 객체는 인스턴스마다 하나이고 렌더가 돌아도 그대로다.
+   * **`.current`는 콜백·이펙트 안에서만 읽는다** — 렌더 중에 만지면 react-hooks/refs에 걸리고,
+   * useState 값을 직접 고치는 것도 같은 이유로 막혀 있다.
+   */
+  const selfRef = useRef<Row>({ close: () => {} });
 
   const slideTo = useCallback(
     (to: number) => {
+      const self = selfRef.current;
+      if (to !== 0) {
+        // 다른 행이 열려 있으면 먼저 닫는다
+        if (openRow && openRow !== self) openRow.close();
+        openRow = self;
+      } else if (openRow === self) {
+        openRow = null;
+      }
       opened.current = to !== 0;
       Animated.spring(tx, {
         toValue: to,
@@ -58,6 +82,15 @@ export function SwipeRow({ children, onPress, onDelete, label = '지우기' }: P
     },
     [tx],
   );
+
+  useEffect(() => {
+    const self = selfRef.current;
+    self.close = () => slideTo(0);
+    // 지워지거나 화면을 떠날 때 자기 자리를 비운다 — 안 그러면 다음 행이 안 열린다
+    return () => {
+      if (openRow === self) openRow = null;
+    };
+  }, [slideTo]);
 
   const endDrag = useCallback(() => {
     setTimeout(() => {

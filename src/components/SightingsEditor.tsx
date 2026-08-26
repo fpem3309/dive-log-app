@@ -72,7 +72,7 @@ export function SightingsEditor({ sightings, onChange, history }: Props) {
                 </Text>
                 {s.isHighlight && (
                   <Text style={[t.meta, { color: surface.accent, fontSize: 10 }]}>
-                    이 다이브의 하이라이트 · 카드 주인공
+                    이 다이브의 하이라이트
                   </Text>
                 )}
               </View>

@@ -44,9 +44,15 @@ const initialDraft = (d: Dive) => {
   };
 };
 
+/**
+ * 선택 항목이 하나라도 적혀 있으면 "더 적기"를 펼친 채로 연다.
+ * `time`도 여기 들어간다 — 시각 입력칸이 "더 적기" 안에 있어서, 빠뜨리면
+ * 시각만 적은 다이브는 값이 저장돼 있는데도 화면에서 보이지도 지워지지도 않는다.
+ */
 const hasOptional = (d: Dive) =>
   d.maxDepth != null ||
   d.duration != null ||
+  !!d.time ||
   d.waterTemp != null ||
   d.visibility != null ||
   d.airEnd != null ||
@@ -310,7 +316,12 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
 
           <Divider />
 
-          <Field label="본 생물" hint="하트를 누르면 카드 주인공이 됩니다">
+          {/*
+            "카드 주인공이 됩니다"라고 약속하지 않는다 — 카드 화면에서 주인공을 직접
+            고를 수 있게 되면서(§10-㉜) 하트가 항상 주인공이 되지는 않는다.
+            하트가 실제로 하는 일(그날의 하이라이트 지정, §2-④)만 말한다.
+          */}
+          <Field label="본 생물" hint="하트를 누르면 그날의 하이라이트가 됩니다">
             <SightingsEditor
               sightings={dive.sightings}
               onChange={(next) => set({ sightings: next })}

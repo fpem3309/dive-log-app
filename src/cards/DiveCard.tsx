@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { hex } from '@/design/tokens';
 import { makeScale } from '@/design/scale';
 import { makeType } from '@/design/type';
-import { accentTarget, chooseHero } from '@/model/chooseHero';
+import { accentTarget, resolveHero } from '@/model/chooseHero';
 import type { Dive } from '@/model/types';
 import { DepthRuler } from './layers/DepthRuler';
 import { PhotoLayer } from './layers/PhotoLayer';
@@ -35,7 +35,8 @@ type Props = {
 export function DiveCard({ dive, region, width, cardRef }: Props) {
   const s = makeScale(width);
   const type = makeType(s);
-  const hero = chooseHero(dive);
+  // 사용자가 고른 게 있으면 그것, 없거나 무효면 자동 규칙 (chooseHero.ts)
+  const hero = resolveHero(dive);
   const target = accentTarget(dive, hero);
   const cells = cellsFor(dive, hero);
 
@@ -86,7 +87,15 @@ export function DiveCard({ dive, region, width, cardRef }: Props) {
             paddingLeft: s.px(52), // 눈금자 폭만큼 비운다
           },
         ]}>
-        <MetaRow s={s} type={type} dive={dive} region={region} showPlace={hero !== 'site'} />
+        {/* 히어로로 올라간 값은 위에서 뺀다. 빈 장소도 빼야 region이 헛되이 밀려나지 않는다 */}
+        <MetaRow
+          s={s}
+          type={type}
+          dive={dive}
+          region={region}
+          showPlace={hero !== 'site' && dive.site.trim().length > 0}
+          showDate={hero !== 'date'}
+        />
         <View
           style={{ marginTop: 'auto' }}
           onLayout={(e) => setHeroTop(e.nativeEvent.layout.y / s.u)}>

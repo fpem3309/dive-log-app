@@ -48,6 +48,8 @@ const ORDER: Record<HeroKind, Key[]> = {
   count: ['maxDepth', 'duration', 'waterTemp', 'airEnd'],
   species: ['maxDepth', 'duration', 'waterTemp', 'diveNumber', 'visibility', 'airEnd', 'style'],
   site: ['maxDepth', 'duration', 'waterTemp', 'visibility', 'airEnd', 'style', 'diveNumber'],
+  // 날짜형은 수심·누적이 둘 다 없는 게 확정이라(chooseHero) 나머지만 온다
+  date: ['duration', 'waterTemp', 'visibility', 'airEnd', 'style'],
 };
 
 export const MAX_CELLS = 4;

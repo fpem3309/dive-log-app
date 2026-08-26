@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import type { Trip } from '@/model/types';
+import { todayISO } from '@/model/dates';
+import type { Dive, Trip } from '@/model/types';
 
 /**
  * 로컬 저장 — CLAUDE.md §6 "로컬 우선". 계정·서버는 나중이다.
@@ -29,13 +30,52 @@ export type DB = {
 
 export const emptyDB = (): DB => ({ trips: [], settings: { onboarded: false } });
 
+/**
+ * 깨진 항목을 **버리지 않고 고쳐서** 돌려준다.
+ *
+ * 저장소가 조금 상했다고 앱 전체가 못 뜨면 안 된다는 게 `loadDB`의 존재 이유인데,
+ * 그렇다고 트립을 통째로 버리면 사용자 기록이 날아간다. 그래서 화면이 실제로 건드리는
+ * 필드만 채워 준다 — `tripTitle()`은 `title.trim()`을, `autoTripTitle()`은 `region.split()`을
+ * 부르고, 목록·상세는 `[...trip.dives]`를 편다. 하나라도 없으면 그 자리에서 터진다.
+ *
+ * 식별자(id)가 없는 것만 버린다. 그건 고쳐도 가리킬 대상이 없다.
+ */
+const repairDive = (d: Partial<Dive>): Dive => ({
+  ...d,
+  id: d.id as string,
+  date: typeof d.date === 'string' ? d.date : todayISO(),
+  site: typeof d.site === 'string' ? d.site : '',
+  discipline: d.discipline === 'free' ? 'free' : 'scuba',
+  sightings: Array.isArray(d.sightings) ? d.sightings : [],
+});
+
+const repairTrip = (t: Partial<Trip>): Trip => {
+  const startDate = typeof t.startDate === 'string' ? t.startDate : todayISO();
+  return {
+    ...t,
+    id: t.id as string,
+    title: typeof t.title === 'string' ? t.title : '',
+    region: typeof t.region === 'string' ? t.region : '',
+    startDate,
+    endDate: typeof t.endDate === 'string' ? t.endDate : startDate,
+    dives: (Array.isArray(t.dives) ? t.dives : [])
+      .filter((d) => d && typeof d.id === 'string')
+      .map(repairDive),
+  };
+};
+
+const hasId = (t: unknown): t is Partial<Trip> =>
+  typeof t === 'object' && t !== null && typeof (t as Partial<Trip>).id === 'string';
+
 export async function loadDB(): Promise<DB> {
   try {
     const raw = await AsyncStorage.getItem(KEY);
     if (!raw) return emptyDB();
     const parsed = JSON.parse(raw) as Partial<DB>;
     return {
-      trips: Array.isArray(parsed.trips) ? parsed.trips : [],
+      // ⚠️ 모양까지 본다 — `trips`가 배열인 것만 확인하면 그 안의 트립에 `dives`가 없을 때
+      // 화면에서 `[...trip.dives]`가 터진다 (repairTrip 주석 참조)
+      trips: Array.isArray(parsed.trips) ? parsed.trips.filter(hasId).map(repairTrip) : [],
       settings: { onboarded: false, ...parsed.settings },
     };
   } catch {
@@ -44,6 +84,11 @@ export async function loadDB(): Promise<DB> {
   }
 }
 
+/**
+ * 실패하면 **던진다.** 여기서 삼키면 저장이 안 된 걸 아무도 모른다 — 앱 전체가
+ * 이 로컬 저장 하나에 얹혀 있어서(§6) 저녁 내내 쓴 8다이브가 조용히 사라진다.
+ * 재시도와 사용자 알림은 호출부(`TripStore`)가 책임진다.
+ */
 export async function saveDB(db: DB): Promise<void> {
   await AsyncStorage.setItem(KEY, JSON.stringify(db));
 }

@@ -87,12 +87,33 @@ export function Hero({ s, type, dive, hero, kickerAccent }: Props) {
     );
   }
 
-  // site — 수심도 누적 횟수도 없는 다이브. 장소가 주인공이 된다 (chooseHero 주석 참조).
+  const kicker = dive.discipline === 'free' ? 'Freedive' : 'Scuba';
+
+  /*
+   * date — 아무것도 안 적은 다이브의 최후 폴백 (chooseHero 주석 참조).
+   *
+   * 크기는 재지 않고 고정한다. 표기가 항상 `YYYY.MM.DD` 10자라 잴 이유가 없다.
+   * mono 자간(≈0.6em)으로 10자 × 46 × 0.6 = 276 ≤ 콘텐츠 폭 284. 76(수심형)보다 작고
+   * 생물명 대역(26–56) 안이라 §10-㉚의 위계를 그대로 지킨다.
+   */
+  if (hero === 'date') {
+    const size = s.px(46);
+    return (
+      <View>
+        <Kicker type={type} s={s} on={kickerAccent}>
+          {kicker}
+        </Kicker>
+        <Text style={[type.figure, { fontSize: size }]}>{dive.date.replaceAll('-', '.')}</Text>
+      </View>
+    );
+  }
+
+  // site — 수심도 누적 횟수도 없는 다이브. 장소가 주인공이 된다.
   const size = s.px(speciesSize(dive.site));
   return (
     <View>
       <Kicker type={type} s={s} on={kickerAccent}>
-        {dive.discipline === 'free' ? 'Freedive' : 'Scuba'}
+        {kicker}
       </Kicker>
       <Text
         style={[type.species, { fontSize: size, lineHeight: size * 1.12, letterSpacing: size * -0.03 }]}
