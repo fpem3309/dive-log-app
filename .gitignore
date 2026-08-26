@@ -47,3 +47,7 @@ example
 
 # artifact
 .md
+
+# 파이프라인 작업 노트 (임시 — 남길 결정은 CLAUDE.md §10으로 올린다)
+.claude/handoff/
+.claude/settings.local.json
