@@ -7,6 +7,13 @@
 
 export type Discipline = 'free' | 'scuba';
 
+/**
+ * 카드 주인공의 종류 — §3.
+ * 저장되는 필드(`Dive.heroOverride`)의 타입이라 모델 쪽에 둔다.
+ * 자동 결정 규칙은 chooseHero.ts에 있고, 거기서 이 타입을 다시 내보낸다.
+ */
+export type HeroKind = 'species' | 'depth' | 'count' | 'site' | 'date';
+
 export type Sighting = {
   name: string;
   scientificName?: string;
@@ -44,6 +51,18 @@ export type Dive = {
   note?: string;
   /** 스쿠버 누적. 온보딩에서 시작 번호를 받아 자동 증가 (§4 주의) */
   diveNumber?: number;
+
+  /**
+   * 카드에서 사용자가 직접 고른 주인공 — §3 "사용자가 카드에서 탭해서 바꿀 수 있게 한다".
+   *
+   * 없으면 자동 규칙(chooseHero) 그대로다. 자동 규칙이 고를 것과 같은 것을 고르면
+   * 저장하지 않고 지운다 — 구별되지 않는 두 상태를 만들지 않기 위해서다.
+   *
+   * ⚠️ 이 값은 **힌트**다. 가리키던 값이 사라지면(수심을 지움, 하트를 뗌, 종목을 바꿈)
+   * 지우지 않고 **읽을 때 무효로 판정**해서 조용히 자동 규칙으로 돌아간다 (resolveHero).
+   * 값이 다시 생기면 선택이 되살아난다.
+   */
+  heroOverride?: HeroKind;
 };
 
 export type Trip = {

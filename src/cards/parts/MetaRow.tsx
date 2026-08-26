@@ -9,6 +9,7 @@ import { formatDate } from './fields';
  * 카드 상단 — 장소·지역 / 날짜·시각. 시안 .meta.
  *
  * 장소가 히어로로 올라간 카드(site형)에서는 여기서 빼서 같은 글자가 두 번 나오지 않게 한다.
+ * 날짜(date형)도 마찬가지 — 다만 시각은 히어로가 안 가져가므로 여기 남는다.
  * 시각은 optional이라 없으면 줄이 하나로 줄어든다.
  */
 
@@ -18,9 +19,12 @@ type Props = {
   dive: Dive;
   region?: string;
   showPlace: boolean;
+  /** 날짜가 히어로로 올라갔으면 여기선 뺀다 */
+  showDate: boolean;
 };
 
-export function MetaRow({ s, type, dive, region, showPlace }: Props) {
+export function MetaRow({ s, type, dive, region, showPlace, showDate }: Props) {
+  const right = [showDate ? formatDate(dive.date) : null, dive.time || null].filter(Boolean);
   return (
     <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: s.px(10) }}>
       <View style={{ flex: 1, minWidth: 0 }}>
@@ -40,10 +44,9 @@ export function MetaRow({ s, type, dive, region, showPlace }: Props) {
           </Text>
         )}
       </View>
-      <Text style={[type.date, { textAlign: 'right' }]}>
-        {formatDate(dive.date)}
-        {!!dive.time && `\n${dive.time}`}
-      </Text>
+      {right.length > 0 && (
+        <Text style={[type.date, { textAlign: 'right' }]}>{right.join('\n')}</Text>
+      )}
     </View>
   );
 }
