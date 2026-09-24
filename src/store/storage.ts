@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { todayISO } from '@/model/dates';
+import { resolvePhotoUri } from '@/model/photos';
 import type { Dive, Trip } from '@/model/types';
 
 /**
@@ -42,6 +43,11 @@ export const emptyDB = (): DB => ({ trips: [], settings: { onboarded: false } })
  */
 const repairDive = (d: Partial<Dive>): Dive => ({
   ...d,
+  // 앱 컨테이너 UUID가 바뀌면 옛 절대경로는 죽는다 (resolvePhotoUri 주석 참조)
+  photo:
+    d.photo && typeof d.photo === 'object' && 'uri' in d.photo
+      ? { uri: resolvePhotoUri(d.photo.uri) }
+      : d.photo,
   id: d.id as string,
   date: typeof d.date === 'string' ? d.date : todayISO(),
   site: typeof d.site === 'string' ? d.site : '',

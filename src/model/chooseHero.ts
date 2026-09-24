@@ -25,18 +25,25 @@ import { highlightOf, type Dive, type HeroKind } from './types';
 export type { HeroKind };
 
 export const chooseHero = (dive: Dive): HeroKind => {
-  if (highlightOf(dive)) return 'species';
+  /*
+   * ⚠️ "값이 있는가"는 **`heroAvailable` 하나로만 판정한다.**
+   * 예전엔 여기서 조건을 따로 적었는데 `heroAvailable`과 어긋났다 — 이쪽은 종목을 안 보고
+   * 저쪽은 봤다. 그래서 프리 다이브에 `diveNumber`가 남아 있으면 카드는 "313번째"를
+   * 보여주는데 **후보 줄에는 그게 없어서 되돌릴 수 없는 히어로**가 됐다 (§3·§10-㉜ 위반).
+   * 같은 규칙을 두 곳에 적으면 언젠가 갈라진다.
+   */
+  if (heroAvailable(dive, 'species')) return 'species';
 
-  // §3 본문
-  if (dive.discipline === 'free' && dive.maxDepth != null) return 'depth';
-  if (dive.discipline === 'scuba' && dive.diveNumber != null) return 'count';
+  // §3 본문 — 종목이 가리키는 것 먼저
+  if (dive.discipline === 'free' && heroAvailable(dive, 'depth')) return 'depth';
+  if (dive.discipline === 'scuba' && heroAvailable(dive, 'count')) return 'count';
 
   // 기본값이 빈 경우 — 남은 것으로 넘긴다
-  if (dive.maxDepth != null) return 'depth';
-  if (dive.diveNumber != null) return 'count';
+  if (heroAvailable(dive, 'depth')) return 'depth';
+  if (heroAvailable(dive, 'count')) return 'count';
 
   // 장소만 적힌 다이브
-  if (dive.site.trim()) return 'site';
+  if (heroAvailable(dive, 'site')) return 'site';
 
   // 아무것도 안 적은 다이브 — 날짜만은 항상 있다
   return 'date';
@@ -59,8 +66,11 @@ const HERO_ORDER: HeroKind[] = ['species', 'depth', 'count', 'site'];
  */
 export const heroAvailable = (dive: Dive, kind: HeroKind): boolean => {
   switch (kind) {
+    // ⚠️ 이름이 비면 성립하지 않는다. 입력 화면은 빈 이름을 막지만(SightingsEditor)
+    // 저장소에서 들어온 것은 안 거쳐 온다 — 그대로 두면 "오늘의 하이라이트" 라벨 밑이
+    // 통째로 빈다 (§10-③과 같은 부류).
     case 'species':
-      return highlightOf(dive) != null;
+      return !!highlightOf(dive)?.name.trim();
     case 'depth':
       return dive.maxDepth != null;
     // 누적 번호는 스쿠버만 센다 — 스쿠버→프리로 바꾸면 이 선택은 무효가 된다
@@ -102,7 +112,7 @@ export const heroCandidates = (dive: Dive): HeroKind[] =>
 export const heroLabel = (dive: Dive, kind: HeroKind): string => {
   switch (kind) {
     case 'species':
-      return highlightOf(dive)?.name ?? '';
+      return highlightOf(dive)?.name.trim() ?? '';
     case 'depth':
       return `${dive.maxDepth}m`;
     case 'count':

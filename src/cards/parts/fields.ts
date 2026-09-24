@@ -54,9 +54,16 @@ const ORDER: Record<HeroKind, Key[]> = {
 
 export const MAX_CELLS = 4;
 
+/**
+ * ⚠️ `!= null`만으로는 부족하다 — `''`는 null이 아니라서 통과한다.
+ * `style: ''`이 들어오면 "종목" 라벨만 있고 값이 빈 칸이 만들어졌다 (§2-② 위반).
+ * 칩으로 고르는 지금 UI는 `''`을 안 만들지만 저장소에서 들어온 것은 다르다.
+ */
+const hasValue = (v: unknown) => v != null && (typeof v !== 'string' || v.trim() !== '');
+
 export const cellsFor = (dive: Dive, hero: HeroKind): Cell[] =>
   ORDER[hero]
-    .filter((k) => dive[k] != null)
+    .filter((k) => hasValue(dive[k]))
     .slice(0, MAX_CELLS)
     .map((k) => ({ key: k, label: BUILD[k].label, segs: BUILD[k].segs(dive) }));
 

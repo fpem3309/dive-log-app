@@ -119,9 +119,8 @@ export function Segmented<T extends string>({
               backgroundColor: on ? 'rgba(15,90,100,0.12)' : 'transparent',
               opacity: pressed ? 0.6 : 1,
             })}>
-            <Text style={[t.chip, on && { color: surface.accent, fontWeight: '600' }]}>
-              {o.label}
-            </Text>
+            {/* 굵기를 바꾸지 않는다 — 웹에서만 먹어서 실기기와 갈린다 (§10-㊵) */}
+            <Text style={[t.chip, on && { color: surface.accent }]}>{o.label}</Text>
           </Pressable>
         );
       })}
