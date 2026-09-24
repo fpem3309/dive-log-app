@@ -32,16 +32,18 @@ export function PhotoPicker({ photo, onChange, keyId }: Props) {
       await notify('사진 접근 권한이 필요합니다', '설정에서 사진 접근을 허용해 주세요.');
       return;
     }
+    /*
+     * 크롭 UI를 쓰지 않는다 (`allowsEditing` 없음). `aspect: [9,16]`이 iOS에서 무시돼
+     * 정사각으로 잘리고, 그게 카드에서 또 잘려 손실이 두 번이었다 — photos.ts 참조.
+     * 원본을 받아서 우리가 9:16으로 한 번만 자른다.
+     */
     const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      // 카드가 9:16이라 세로로 자르게 유도한다
-      allowsEditing: true,
-      aspect: [9, 16],
-      quality: 0.9,
+      quality: 1,
     });
     if (res.canceled || !res.assets[0]) return;
-    // 피커 uri는 캐시 경로다. 앱이 소유하는 곳으로 복사해 두고 그 경로를 저장한다.
-    onChange({ uri: persistPhoto(res.assets[0].uri, keyId) });
+    // 피커 uri는 캐시 경로다. 잘라서 앱이 소유하는 곳에 두고 그 경로를 저장한다.
+    onChange({ uri: await persistPhoto(res.assets[0].uri, keyId) });
   };
 
   if (!uri) {
