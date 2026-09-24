@@ -62,12 +62,21 @@ const press = async (text: string) => {
   });
 };
 
-/** 약속이 실제로 결말이 났는지 — 누수는 "아무 일도 안 일어남"이라 이렇게만 잡힌다 */
-const track = <T,>(p: Promise<T>) => {
+/**
+ * 약속이 실제로 결말이 났는지 — 누수는 "아무 일도 안 일어남"이라 이렇게만 잡힌다.
+ *
+ * ⚠️ **Promise가 아니라 호출을 받아 `act` 안에서 실행한다.** `confirm()`은 부르는 즉시
+ * `ConfirmProvider`의 `setCurrent`를 때리는데, act 밖에서 부르면 리액트가 경고하고
+ * (그 경고는 vitest 기본 리포터에 가려진다) 단언이 낡은 트리를 볼 수 있다.
+ * 지금은 뒤따르는 `await act(...)`가 흘려 주지만 리액트 버전이 오르면 순서 의존이 된다.
+ */
+const track = <T,>(call: () => Promise<T>) => {
   const state: { settled: boolean; value?: T } = { settled: false };
-  void p.then((v) => {
-    state.settled = true;
-    state.value = v;
+  act(() => {
+    void call().then((v) => {
+      state.settled = true;
+      state.value = v;
+    });
   });
   return state;
 };
@@ -93,12 +102,12 @@ describe('㉒ 확인창은 줄을 선다', () => {
   it('떠 있는 확인창이 알림에 밀려나지 않고, 둘 다 결말이 난다', async () => {
     await mount();
 
-    const del = track(api.confirm({ title: '이 트립을 지울까요?', destructive: true }));
+    const del = track(() => api.confirm({ title: '이 트립을 지울까요?', destructive: true }));
     await act(async () => {});
     expect(showingTitle()).toBe('이 트립을 지울까요?');
 
     // 저장 실패 알림 — 사용자가 부르지 않은 모달이 끼어드는 실제 경로 (㉞)
-    const warn = track(api.notify('저장되지 않았습니다'));
+    const warn = track(() => api.notify('저장되지 않았습니다'));
     await act(async () => {});
     expect(showingTitle(), '알림이 확인창을 밀어냈다').toBe('이 트립을 지울까요?');
     expect(warn.settled).toBe(false);
@@ -117,9 +126,9 @@ describe('㉒ 확인창은 줄을 선다', () => {
 
   it('세 개가 겹쳐도 순서대로 처리되고 하나도 새지 않는다', async () => {
     await mount();
-    const a = track(api.confirm({ title: 'A' }));
-    const b = track(api.confirm({ title: 'B' }));
-    const c = track(api.notify('C'));
+    const a = track(() => api.confirm({ title: 'A' }));
+    const b = track(() => api.confirm({ title: 'B' }));
+    const c = track(() => api.notify('C'));
     await act(async () => {});
 
     expect(showingTitle()).toBe('A');
@@ -140,7 +149,7 @@ describe('㉒ 확인창은 줄을 선다', () => {
 
   it('알림에는 취소가 없다 — 확인만', async () => {
     await mount();
-    track(api.notify('저장되지 않았습니다', '저장 공간을 살펴봐 주세요'));
+    track(() => api.notify('저장되지 않았습니다', '저장 공간을 살펴봐 주세요'));
     await act(async () => {});
     expect(findLabel('확인')).toBeTruthy();
     expect(findLabel('취소')).toBeFalsy();
@@ -149,8 +158,8 @@ describe('㉒ 확인창은 줄을 선다', () => {
 
   it('화면이 사라지면 기다리던 쪽은 "취소"를 받는다 — 매달아 두지 않는다', async () => {
     await mount();
-    const a = track(api.confirm({ title: 'A' }));
-    const b = track(api.confirm({ title: 'B' }));
+    const a = track(() => api.confirm({ title: 'A' }));
+    const b = track(() => api.confirm({ title: 'B' }));
     await act(async () => {});
 
     await act(async () => root.unmount());
