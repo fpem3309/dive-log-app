@@ -685,12 +685,21 @@ computed style이 `padding:0; flex-direction:column` — style이 전달되지 �
 
 **이 프로젝트는 공백이 든 경로에 있다** (`/Volumes/P31 2TB/…` — 볼륨 이름에 공백).
 Expo·React Native의 iOS 빌드 스크립트 몇 개가 경로를 따옴표로 감싸지 않아서 깨진다.
-세 곳을 패치해 뒀는데 **전부 재생성되는 디렉토리 안에 있어서 사라진다.**
+세 곳을 고쳐야 하는데 전부 재생성되는 디렉토리 안에 있다. **지금은 자동으로 다시 적용된다:**
 
-**사라지는 조건**
-- `npm install`, `npx expo install <pkg>` → ①② 소멸
-- `expo prebuild --clean` → ③ 소멸
-- 다른 머신에서 클론 → 전부 없음
+| | 위치 | 고정 방법 | 다시 적용되는 때 |
+|---|---|---|---|
+| ①② | `node_modules/expo-constants` | `patches/expo-constants+57.0.9.patch` | `npm install` 후 `postinstall` |
+| ③ | `ios/` (gitignore) | `plugins/withQuotedBundleScript.js` | `expo prebuild` 때마다 |
+
+**그래도 깨질 수 있는 경우**
+- **`expo-constants` 버전이 오른다** (`npx expo install --fix`, SDK 업그레이드) → 패치가 안 맞으면
+  **`npm install`이 실패한다.** 일부러 그렇게 했다(`--error-on-fail`). patch-package는 로컬에서 기본적으로
+  실패해도 0으로 끝나서 빌드가 깨진 뒤에야 알게 된다. 새 버전에서 ①②를 다시 고치고
+  `npx patch-package expo-constants`로 패치를 다시 떠라 (옛 `.patch`는 지운다).
+  패치가 이미 반영된 버전이면 `.patch`를 지우면 된다.
+- **템플릿이 바뀌어 ③의 원문을 못 찾는다** → prebuild가 `withQuotedBundleScript` 경고를 낸다.
+- 아래 복구 절차는 위 장치가 실패했을 때 손으로 고치는 방법이다.
 
 **증상 두 가지 — 두 번째가 고약하다**
 1. 빌드 실패: `bash: /Volumes/P31: No such file or directory`
@@ -722,12 +731,13 @@ PROJECT_DIR_BASENAME=$(basename "$PROJECT_DIR")
 
 ①을 고친 뒤에는 `cd ios && pod install`을 다시 돌려야 Pods 프로젝트에 반영된다.
 
-**근본 해결 (아직 안 함)**
-- 볼륨 이름에서 공백 제거 (`diskutil rename "P31 2TB" "P31-2TB"`) — 가장 깔끔하다.
+**더 근본적인 해결 (안 함)**
+- 볼륨 이름에서 공백 제거 (`diskutil rename "P31 2TB" "P31-2TB"`). 이러면 위 장치가 전부 필요 없다.
   같은 디스크의 다른 프로젝트도 함께 해결된다. 스캔해 보니 셸 설정·LaunchAgent·심볼릭
   링크에 이 경로를 박아 둔 곳은 없었고, 영향받는 건 `ios/Pods`의 절대경로 243개
   (→ `pod install`로 해결)와 에디터 최근 항목 정도다.
-- 또는 `patch-package`로 ①②를 고정 (③은 별도).
+  디스크 전체에 영향을 주는 일이라 프로젝트 안에서 끝나는 쪽(위 표)을 먼저 골랐다.
+- 고칠 곳이 새로 생겨도 `patches/`나 플러그인에 더한다. `node_modules`나 `ios/`를 손으로 고치고 끝내지 마라.
 
 ---
 
