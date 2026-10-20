@@ -134,6 +134,16 @@ describe('§2-② 하단 칸', () => {
     expect(cellsFor(d, 'count').map((c) => c.key)).not.toContain('diveNumber');
   });
 
+  it('§10-㉜ 스쿠버를 수심형으로 골라도 누적 번호·공기압 칸이 남는다', () => {
+    const d = minimal({ maxDepth: 18, duration: 51, waterTemp: 22, airEnd: 70, diveNumber: 315 });
+    expect(cellsFor(d, 'depth').map((c) => c.key)).toEqual([
+      'duration',
+      'waterTemp',
+      'diveNumber',
+      'airEnd',
+    ]);
+  });
+
   it('§10-⑧ 시간 표기는 종목별로 나뉜다', () => {
     expect(durationSegs(minimal({ discipline: 'free', duration: 128 }))).toEqual([
       { t: '2' },
