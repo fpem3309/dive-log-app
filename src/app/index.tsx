@@ -170,11 +170,14 @@ export default function Home() {
 
         <Button label="+ 새 트립" variant="primary" onPress={onNewTrip} />
 
-        <View style={{ marginTop: sp.huge, gap: sp.md, alignItems: 'center' }}>
-          <Pressable hitSlop={10} onPress={() => router.push('/cards')}>
-            <Text style={[t.meta, { color: inkA(0.42) }]}>카드 레이아웃 검증 (개발용)</Text>
-          </Pressable>
-        </View>
+        {/* 개발 빌드에서만 — 테스트하는 지인에게 남의 다이브 8장이 보이면 안 된다 (§7) */}
+        {__DEV__ && (
+          <View style={{ marginTop: sp.huge, gap: sp.md, alignItems: 'center' }}>
+            <Pressable hitSlop={10} onPress={() => router.push('/cards')}>
+              <Text style={[t.meta, { color: inkA(0.42) }]}>카드 레이아웃 검증 (개발용)</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
