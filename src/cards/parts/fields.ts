@@ -44,7 +44,8 @@ const BUILD: Record<Key, { label: string; segs: (d: Dive) => Seg[] }> = {
  * 뒤쪽은 앞이 비었을 때 자리를 메우는 예비 항목이다.
  */
 const ORDER: Record<HeroKind, Key[]> = {
-  depth: ['duration', 'waterTemp', 'visibility', 'style'],
+  // 뒤 둘은 스쿠버를 수심형으로 고른 경우(§10-㉜) — 프리에는 둘 다 없어서 프리 카드는 그대로다
+  depth: ['duration', 'waterTemp', 'visibility', 'style', 'diveNumber', 'airEnd'],
   count: ['maxDepth', 'duration', 'waterTemp', 'airEnd'],
   species: ['maxDepth', 'duration', 'waterTemp', 'diveNumber', 'visibility', 'airEnd', 'style'],
   site: ['maxDepth', 'duration', 'waterTemp', 'visibility', 'airEnd', 'style', 'diveNumber'],
