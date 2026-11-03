@@ -19,8 +19,9 @@ import { chooseHero, heroCandidates, type HeroKind } from '@/model/chooseHero';
 import { padMD, tripTitle } from '@/model/dates';
 import type { Dive } from '@/model/types';
 import { useTrips } from '@/store/TripStore';
-import { Button } from '@/ui/controls';
+import { Button, IconButton } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
+import { ChevronLeft } from '@/ui/icons';
 import { sp, surface, t } from '@/ui/theme';
 
 /**
@@ -101,7 +102,7 @@ export default function TripCardsScreen() {
 
   const onSave = async (dive: Dive) => {
     if (Platform.OS === 'web') {
-      await notify('저장은 앱에서만', '웹에서는 카드 이미지를 만들 수 없습니다.');
+      await notify('저장은 앱에서만', '웹에서는 카드 이미지를 만들 수 없어요.');
       return;
     }
     setPending(dive);
@@ -110,11 +111,11 @@ export default function TripCardsScreen() {
     try {
       const res = await saveCardToLibrary(shotRef);
       await notify(
-        res.saved ? '사진에 저장했습니다' : '저장하지 못했습니다',
+        res.saved ? '사진에 저장했어요' : '저장하지 못했어요',
         res.saved ? `${EXPORT_W}×${EXPORT_H}` : (res.reason ?? ''),
       );
     } catch (e) {
-      await notify('만들지 못했습니다', String(e));
+      await notify('만들지 못했어요', String(e));
     } finally {
       setPending(null);
     }
@@ -139,18 +140,23 @@ export default function TripCardsScreen() {
     <SafeAreaView style={{ flex: 1, backgroundColor: surface.bg }} edges={['top']}>
       <ScrollView contentContainerStyle={{ padding: PAD, paddingBottom: 72, alignItems: 'center' }}>
         <View style={{ width: cardW, gap: sp.md }}>
-          <Pressable hitSlop={10} onPress={() => router.push(`/trip/${trip.id}`)}>
-            <Text style={[t.meta, { color: surface.accent }]}>‹ {tripTitle(trip)}</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.md }}>
+            <IconButton label="뒤로" onPress={() => router.push(`/trip/${trip.id}`)}>
+              <ChevronLeft />
+            </IconButton>
+            <Text style={[t.meta, { flex: 1, minWidth: 0 }]} numberOfLines={1}>
+              {tripTitle(trip)}
+            </Text>
+          </View>
           <Text style={t.title}>카드 {dives.length}장</Text>
           {/* 두 줄이 한 문단으로 읽혀야 해서 그룹 gap 밖으로 묶는다 (둘째 줄은 +23px뿐) */}
           <View style={{ marginBottom: sp.md }}>
             <Text style={t.body}>
-              올리고 싶은 걸 고르세요. 9:16 · {EXPORT_W}×{EXPORT_H}로 저장됩니다.
+              올리고 싶은 걸 고르세요. 9:16 · {EXPORT_W}×{EXPORT_H}로 저장돼요.
             </Text>
             {/* 바꿀 게 있는 카드가 하나라도 있을 때만 — 누를 수 없는 걸 누르라고 하지 않는다 */}
             {anyPickable && (
-              <Text style={t.body}>카드에서 제일 큰 글자를 누르면 다른 값으로 바꿀 수 있습니다.</Text>
+              <Text style={t.body}>카드에서 제일 큰 글자를 누르면 다른 값으로 바꿀 수 있어요.</Text>
             )}
           </View>
 

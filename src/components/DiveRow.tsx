@@ -5,11 +5,12 @@ import { inkA } from '@/design/tokens';
 import { daysOfTrip, padMD, weekdayKr } from '@/model/dates';
 import type { Discipline, Dive, Trip } from '@/model/types';
 import { useTrips } from '@/store/TripStore';
-import { Button, Chip, Divider, Segmented } from '@/ui/controls';
+import { Button, Chip, Divider, Raised, Segmented } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
 import { SwipeRow } from '@/ui/SwipeRow';
 import { Field, MinSecField, NumberField, TextField } from '@/ui/fields';
-import { radius, sp, surface, t } from '@/ui/theme';
+import { ChevronDown, Close, Heart } from '@/ui/icons';
+import { radius, shadow, sp, surface, t } from '@/ui/theme';
 import { PhotoPicker } from './PhotoPicker';
 import { SightingsEditor } from './SightingsEditor';
 
@@ -138,52 +139,70 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
   // 펼친 편집기는 폼이라 감싸지 않는다 — 입력 중에 밀리면 곤란하다
   if (!expanded) {
     return (
-      <SwipeRow onPress={onToggle} onDelete={confirmDelete}>
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: sp.md,
-            paddingVertical: 14,
-            paddingHorizontal: sp.md,
-          }}>
-          <Text style={[t.meta, { width: 20, textAlign: 'center', color: inkA(0.42) }]}>
-            {ordinal}
-          </Text>
-          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-            <Text style={[t.rowTitle, !dive.site && { color: inkA(0.42) }]} numberOfLines={1}>
-              {dive.site || '새 다이브'}
-            </Text>
-            <Text style={t.meta} numberOfLines={1}>
-              {padMD(dive.date)} · {isFree ? '프리' : '스쿠버'}
-              {dive.maxDepth != null && ` · ${dive.maxDepth}m`}
-              {diveNumber != null && ` · ${diveNumber}번째`}
-            </Text>
+      <Raised>
+        <SwipeRow onPress={onToggle} onDelete={confirmDelete}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: sp.md,
+              paddingVertical: 14,
+              paddingLeft: 14,
+              paddingRight: sp.lg,
+            }}>
+            <OrdinalTile n={ordinal} />
+            <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+              <Text style={[t.rowTitle, !dive.site && { color: inkA(0.5) }]} numberOfLines={1}>
+                {dive.site || '새 다이브'}
+              </Text>
+              <Text style={t.meta} numberOfLines={1}>
+                {padMD(dive.date)} · {isFree ? '프리' : '스쿠버'}
+                {dive.maxDepth != null && ` · ${dive.maxDepth}m`}
+                {diveNumber != null && ` · ${diveNumber}번째`}
+              </Text>
+            </View>
+            {dive.sightings.some((s) => s.isHighlight) && (
+              <Heart size={16} filled color={surface.accent} />
+            )}
+            <ChevronDown />
           </View>
-          {dive.sightings.some((s) => s.isHighlight) && (
-            <Text style={{ color: surface.accent, fontSize: 14 }}>♥</Text>
-          )}
-          <Text style={{ color: inkA(0.3), fontSize: 18 }}>›</Text>
-        </View>
-      </SwipeRow>
+        </SwipeRow>
+      </Raised>
     );
   }
 
   // ---------- 펼친 편집기 ----------
+  // 지금 쓰고 있는 다이브라는 걸 액센트 고리와 채운 번호 타일이 말한다
   return (
     <View
       style={{
-        borderRadius: radius.lg,
-        backgroundColor: surface.sunken,
-        borderWidth: 1,
-        borderColor: surface.line,
-        padding: sp.lg,
-        gap: sp.lg,
+        borderRadius: radius.xl,
+        backgroundColor: surface.raised,
+        borderWidth: 2,
+        borderColor: 'rgba(29,95,176,0.16)',
+        boxShadow: shadow.raised,
+        padding: sp.lg - 2,
+        paddingTop: sp.lg,
+        gap: sp.xl,
       }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-        <Text style={[t.label, { flex: 1 }]}>다이브 {ordinal}</Text>
-        <Pressable onPress={onToggle} hitSlop={12}>
-          <Text style={{ color: inkA(0.5), fontSize: 18 }}>✕</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.md }}>
+        <OrdinalTile n={ordinal} active />
+        <Text style={[t.rowTitle, { flex: 1, minWidth: 0 }]} numberOfLines={1}>
+          {dive.site || '새 다이브'}
+        </Text>
+        <Pressable
+          onPress={onToggle}
+          accessibilityRole="button"
+          accessibilityLabel="접기"
+          style={({ pressed }) => ({
+            width: 44,
+            height: 44,
+            marginRight: -sp.sm,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.5 : 1,
+          })}>
+          <Close />
         </Pressable>
       </View>
 
@@ -223,13 +242,15 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
 
       {!more ? (
         <Pressable onPress={() => setMore(true)} hitSlop={8}>
-          <Text style={[t.chip, { color: surface.accent }]}>› 더 적기 (수심 · 시간 · 생물 · 사진)</Text>
+          <Text style={[t.chip, { color: surface.accent, paddingHorizontal: sp.xs }]}>
+            + 더 적기 (수심 · 시간 · 생물 · 사진)
+          </Text>
         </Pressable>
       ) : (
-        <View style={{ gap: sp.lg }}>
-          <Divider />
+        <View style={{ gap: sp.xl }}>
+          <Divider style={{ marginHorizontal: sp.xs }} />
 
-          <View style={{ flexDirection: 'row', gap: sp.lg }}>
+          <View style={{ flexDirection: 'row', gap: sp.md }}>
             <Field label="최대 수심" style={{ flex: 1 }}>
               <NumberField
                 value={draft.maxDepth}
@@ -263,7 +284,7 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
             )}
           </Field>
 
-          <View style={{ flexDirection: 'row', gap: sp.lg }}>
+          <View style={{ flexDirection: 'row', gap: sp.md }}>
             <Field label="시야" style={{ flex: 1 }}>
               <NumberField
                 value={draft.visibility}
@@ -302,7 +323,7 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
             </Field>
           )}
 
-          <Field label="시각" hint="비워도 됩니다">
+          <Field label="시각" hint="비워도 돼요">
             <TextField
               value={draft.time}
               onChangeText={(v) => {
@@ -314,14 +335,14 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
             />
           </Field>
 
-          <Divider />
+          <Divider style={{ marginHorizontal: sp.xs }} />
 
           {/*
             "카드 주인공이 됩니다"라고 약속하지 않는다 — 카드 화면에서 주인공을 직접
             고를 수 있게 되면서(§10-㉜) 하트가 항상 주인공이 되지는 않는다.
             하트가 실제로 하는 일(그날의 하이라이트 지정, §2-④)만 말한다.
           */}
-          <Field label="본 생물" hint="하트를 누르면 그날의 하이라이트가 됩니다">
+          <Field label="본 생물" hint="하트는 그날의 하이라이트예요">
             <SightingsEditor
               sightings={dive.sightings}
               onChange={(next) => set({ sightings: next })}
@@ -329,7 +350,7 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
             />
           </Field>
 
-          <Field label="사진" hint="없으면 물기둥 배경이 됩니다">
+          <Field label="사진" hint="없으면 물기둥이 배경이 돼요">
             <PhotoPicker photo={dive.photo} onChange={(p) => set({ photo: p })} keyId={dive.id} />
           </Field>
 
@@ -344,11 +365,29 @@ export function DiveRow({ trip, dive, ordinal, diveNumber, expanded, onToggle }:
         </View>
       )}
 
-      <Divider />
-      <View style={{ flexDirection: 'row', gap: sp.md }}>
+      <View style={{ flexDirection: 'row', gap: sp.sm }}>
         <Button label="접기" onPress={onToggle} style={{ flex: 1 }} />
         <Button label="지우기" variant="danger" onPress={confirmDelete} />
       </View>
+    </View>
+  );
+}
+
+/** 트립 안에서 몇 번째인지. 펼친 것만 액센트로 채운다 */
+function OrdinalTile({ n, active }: { n: number; active?: boolean }) {
+  return (
+    <View
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: radius.sm,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: active ? surface.accent : surface.tint,
+      }}>
+      <Text style={[t.rowTitle, { fontSize: 14, fontVariant: ['tabular-nums'] }, active && { color: '#FFFFFF' }]}>
+        {n}
+      </Text>
     </View>
   );
 }

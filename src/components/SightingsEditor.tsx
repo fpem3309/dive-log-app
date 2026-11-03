@@ -3,8 +3,9 @@ import { Pressable, Text, View } from 'react-native';
 
 import { inkA } from '@/design/tokens';
 import type { Sighting } from '@/model/types';
-import { Chip, HeartToggle } from '@/ui/controls';
+import { Chip } from '@/ui/controls';
 import { TextField } from '@/ui/fields';
+import { Close, Heart } from '@/ui/icons';
 import { radius, sp, surface, t } from '@/ui/theme';
 
 /**
@@ -57,34 +58,44 @@ export function SightingsEditor({ sightings, onChange, history }: Props) {
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: sp.md,
-                paddingVertical: 9,
-                paddingHorizontal: sp.md,
+                gap: sp.xs,
+                minHeight: 56,
+                paddingVertical: 6,
+                paddingLeft: 6,
+                paddingRight: 4,
                 borderRadius: radius.md,
-                backgroundColor: s.isHighlight ? 'rgba(29,95,176,0.07)' : surface.raised,
-                borderWidth: 1,
-                borderColor: s.isHighlight ? 'rgba(29,95,176,0.40)' : surface.line,
+                backgroundColor: surface.field,
               }}>
               <HeartToggle on={s.isHighlight} onPress={() => toggleHeart(i)} />
-              <View style={{ flex: 1, gap: 3 }}>
-                <Text style={t.rowTitle} numberOfLines={1}>
+              <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                <Text style={[t.input, { fontSize: 15.5 }]} numberOfLines={1}>
                   {s.name}
                 </Text>
                 {s.isHighlight && (
-                  <Text style={[t.meta, { color: surface.accent, fontSize: 10 }]}>
+                  <Text style={[t.meta, { color: surface.accent, fontSize: 12 }]}>
                     이 다이브의 하이라이트
                   </Text>
                 )}
               </View>
-              <Pressable onPress={() => remove(i)} hitSlop={12}>
-                <Text style={{ color: inkA(0.42), fontSize: 17 }}>✕</Text>
+              <Pressable
+                onPress={() => remove(i)}
+                accessibilityRole="button"
+                accessibilityLabel={`${s.name} 빼기`}
+                style={({ pressed }) => ({
+                  width: 44,
+                  height: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: pressed ? 0.5 : 1,
+                })}>
+                <Close size={16} />
               </Pressable>
             </View>
           ))}
         </View>
       )}
 
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: sp.sm }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.sm }}>
         <TextField
           value={draft}
           onChangeText={setDraft}
@@ -98,20 +109,22 @@ export function SightingsEditor({ sightings, onChange, history }: Props) {
           disabled={!draft.trim()}
           hitSlop={10}
           style={({ pressed }) => ({
-            paddingHorizontal: 14,
-            paddingVertical: 7,
-            borderRadius: radius.pill,
-            borderWidth: 1,
-            borderColor: draft.trim() ? surface.accent : surface.lineStrong,
-            opacity: pressed ? 0.6 : draft.trim() ? 1 : 0.4,
+            height: 52,
+            paddingHorizontal: 18,
+            justifyContent: 'center',
+            borderRadius: radius.md,
+            backgroundColor: draft.trim() ? surface.selected : surface.field,
+            opacity: pressed ? 0.6 : draft.trim() ? 1 : 0.5,
           })}>
-          <Text style={[t.chip, { color: draft.trim() ? surface.accent : inkA(0.45) }]}>추가</Text>
+          <Text style={[t.button, { fontSize: 15, color: draft.trim() ? surface.accent : inkA(0.55) }]}>
+            추가
+          </Text>
         </Pressable>
       </View>
 
       {suggestions.length > 0 && (
         <View style={{ gap: sp.sm }}>
-          <Text style={[t.meta, { fontSize: 10.5 }]}>전에 적은 것</Text>
+          <Text style={[t.meta, { fontSize: 12, paddingHorizontal: sp.xs }]}>전에 적은 것</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.sm }}>
             {suggestions.map((name) => (
               <Chip key={name} label={name} onPress={() => add(name)} />
@@ -120,5 +133,26 @@ export function SightingsEditor({ sightings, onChange, history }: Props) {
         </View>
       )}
     </View>
+  );
+}
+
+/** 하트 — "의미 있는 생물"은 사용자가 정한다 (CLAUDE.md §2-④) */
+export function HeartToggle({ on, onPress }: { on: boolean; onPress: () => void }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={on ? '하이라이트 해제' : '하이라이트로 지정'}
+      style={({ pressed }) => ({
+        width: 44,
+        height: 44,
+        borderRadius: radius.sm,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: on ? surface.selected : 'transparent',
+        opacity: pressed ? 0.5 : 1,
+      })}>
+      <Heart filled={on} color={on ? surface.accent : inkA(0.4)} />
+    </Pressable>
   );
 }

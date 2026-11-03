@@ -43,7 +43,7 @@ export async function saveCardToLibrary(ref: RefObject<View | null>): Promise<Sa
   // 권한이 없으면 사진첩에 못 넣는다. 임시 파일을 남길 이유도 없다.
   if (!perm.granted) {
     discard(uri);
-    return { uri, saved: false, reason: '사진 접근 권한이 없습니다' };
+    return { uri, saved: false, reason: '사진 접근 권한이 없어요' };
   }
   try {
     await Asset.create(uri);

@@ -3,14 +3,15 @@ import { useMemo } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { inkA } from '@/design/tokens';
+import { hex, paperA } from '@/design/tokens';
 import { dateWithDay, tripTitle, yearOf } from '@/model/dates';
 import type { Trip } from '@/model/types';
 import { useTrips } from '@/store/TripStore';
-import { Button, Divider } from '@/ui/controls';
+import { Button, Raised } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
+import { ChevronRight, Heart, Plus, Waves } from '@/ui/icons';
 import { SwipeRow } from '@/ui/SwipeRow';
-import { radius, sp, surface, t } from '@/ui/theme';
+import { radius, shadow, sp, surface, t } from '@/ui/theme';
 
 /**
  * 홈 — 트립 목록.
@@ -38,7 +39,7 @@ export default function Home() {
       title: '이 트립을 지울까요?',
       message:
         `"${tripTitle(trip)}"` +
-        (n > 0 ? `\n다이브 ${n}개가 함께 사라집니다. 되돌릴 수 없습니다.` : '\n되돌릴 수 없습니다.'),
+        (n > 0 ? `\n다이브 ${n}개가 함께 사라져요. 되돌릴 수 없어요.` : '\n되돌릴 수 없어요.'),
       destructive: true,
     });
     if (ok) deleteTrip(trip.id);
@@ -64,96 +65,118 @@ export default function Home() {
   if (!ready) return <SafeAreaView style={{ flex: 1, backgroundColor: surface.bg }} />;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: surface.bg }} edges={['top']}>
-      <ScrollView contentContainerStyle={{ padding: sp.xl, paddingBottom: 72, gap: sp.xl }}>
-        <View style={{ gap: sp.md }}>
-          <Text style={t.eyebrow}>Dive log</Text>
-          <Text style={t.title}>다이브 로그</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: surface.bg }} edges={['top', 'bottom']}>
+      <ScrollView contentContainerStyle={{ padding: sp.xl, paddingTop: sp.xxl, paddingBottom: sp.xxl, gap: sp.xxl }}>
+        <View style={{ gap: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.md }}>
+            <Text style={[t.title, { flex: 1, minWidth: 0 }]}>다이브 로그</Text>
+            {settings.diveNumberStart != null && (
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 6,
+                  paddingVertical: 7,
+                  paddingLeft: 10,
+                  paddingRight: 12,
+                  borderRadius: radius.pill,
+                  backgroundColor: surface.raised,
+                  boxShadow: shadow.raised,
+                }}>
+                <Waves color={surface.accent} />
+                <Text style={[t.meta, { fontFamily: t.rowTitle.fontFamily, color: hex.deep }]}>
+                  누적 {settings.diveNumberStart + totalDives}번
+                </Text>
+              </View>
+            )}
+          </View>
           {trips.length > 0 && (
             // 트립 수는 연도 헤더가 말하므로 여기서는 전체 합계만
-            <Text style={t.meta}>
-              다이브 {totalDives}
-              {settings.diveNumberStart != null && ` · 누적 ${settings.diveNumberStart + totalDives}`}
-            </Text>
+            <Text style={[t.meta, { fontSize: 14 }]}>다이브 {totalDives}번 적었어요</Text>
           )}
         </View>
 
         {trips.length === 0 ? (
-          <View style={{ gap: sp.lg, paddingVertical: sp.xxl }}>
-            <Text style={t.heading}>아직 트립이 없습니다</Text>
+          <View style={{ gap: sp.md, paddingVertical: sp.xl }}>
+            <Text style={t.heading}>아직 트립이 없어요</Text>
             <Text style={t.body}>
               트립을 만들고 그 안에 다이브를 툭툭 추가하세요.{'\n'}
-              날짜 · 장소 · 종목만 있으면 카드가 나옵니다.
+              날짜 · 장소 · 종목만 있으면 카드가 나와요.
             </Text>
           </View>
         ) : (
           groups.map(([year, yearTrips]) => (
             <View key={year} style={{ gap: sp.md }}>
               {/* 연도가 날짜의 연도를 책임진다 — 행에는 월·일만 남는다 */}
-              <View style={{ gap: sp.sm }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: sp.md }}>
-                  <Text style={[t.label, { fontSize: 13, letterSpacing: 2.6, color: inkA(0.72) }]}>
-                    {year}
-                  </Text>
-                  <Text style={[t.meta, { flex: 1, minWidth: 0, textAlign: 'right' }]}>
-                    트립 {yearTrips.length} · 다이브{' '}
-                    {yearTrips.reduce((n, tr) => n + tr.dives.length, 0)}
-                  </Text>
-                </View>
-                <Divider />
-              </View>
-
               <View
                 style={{
-                  borderRadius: radius.lg,
-                  backgroundColor: surface.raised,
-                  borderWidth: 1,
-                  borderColor: surface.line,
-                  overflow: 'hidden',
+                  flexDirection: 'row',
+                  alignItems: 'baseline',
+                  gap: sp.md,
+                  paddingHorizontal: sp.xs,
                 }}>
-                {yearTrips.map((trip, i) => {
+                <Text style={[t.heading, { fontSize: 19, fontVariant: ['tabular-nums'] }]}>{year}</Text>
+                <Text style={[t.meta, { flex: 1, minWidth: 0, textAlign: 'right' }]}>
+                  트립 {yearTrips.length} · 다이브{' '}
+                  {yearTrips.reduce((n, tr) => n + tr.dives.length, 0)}
+                </Text>
+              </View>
+
+              <View style={{ gap: 10 }}>
+                {yearTrips.map((trip) => {
                   const highlights = trip.dives.filter((d) =>
                     d.sightings.some((s) => s.isHighlight),
                   ).length;
                   return (
-                    <View key={trip.id}>
-                      {i > 0 && <Divider style={{ marginHorizontal: sp.md }} />}
+                    <Raised key={trip.id}>
                       {/*
                         <Link asChild>를 쓰지 않는다 — 자식 Pressable의 style을 통째로
                         덮어써서 행이 패딩도 flexDirection도 잃는다 (§10-⑳).
-                        날짜는 점 체인에 끼우지 않고 오른쪽에 세운다.
+                        날짜는 점 체인에 끼우지 않고 둘째 줄 맨 앞에 둔다.
                       */}
                       <SwipeRow
                         onPress={() => router.push(`/trip/${trip.id}`)}
                         onDelete={() => confirmDelete(trip)}>
                         <View
                           style={{
-                            gap: 5,
-                            paddingVertical: 15,
-                            paddingHorizontal: sp.lg,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 14,
+                            paddingVertical: 14,
+                            paddingLeft: 14,
+                            paddingRight: sp.lg,
                           }}>
-                          <View
-                            style={{ flexDirection: 'row', alignItems: 'baseline', gap: sp.md }}>
-                            <Text style={[t.rowTitle, { flex: 1, minWidth: 0 }]} numberOfLines={1}>
+                          <DiveCountTile trip={trip} />
+                          <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+                            <Text style={t.rowTitle} numberOfLines={1}>
                               {tripTitle(trip)}
                             </Text>
-                            <Text style={t.meta}>{dateWithDay(trip.startDate)}</Text>
-                          </View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: sp.md }}>
-                            <Text style={[t.meta, { flex: 1, minWidth: 0 }]} numberOfLines={1}>
-                              {trip.region ? `${trip.region} · ` : ''}
-                              {`다이브 ${trip.dives.length}`}
+                            <Text style={t.meta} numberOfLines={1}>
+                              {dateWithDay(trip.startDate)}
+                              {trip.region ? ` · ${trip.region}` : ''}
                             </Text>
-                            {highlights > 0 && (
-                              <Text style={{ color: surface.accent, fontSize: 12.5 }}>
-                                ♥ {highlights}
-                              </Text>
-                            )}
-                            <Text style={{ color: inkA(0.3), fontSize: 17 }}>›</Text>
                           </View>
+                          {highlights > 0 && (
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                gap: 4,
+                                paddingVertical: 4,
+                                paddingHorizontal: 9,
+                                borderRadius: radius.pill,
+                                backgroundColor: surface.selected,
+                              }}>
+                              <Heart size={12} filled color={surface.accent} />
+                              <Text style={[t.meta, { fontSize: 12, color: surface.accent }]}>
+                                {highlights}
+                              </Text>
+                            </View>
+                          )}
+                          <ChevronRight />
                         </View>
                       </SwipeRow>
-                    </View>
+                    </Raised>
                   );
                 })}
               </View>
@@ -163,19 +186,57 @@ export default function Home() {
 
         {trips.length > 0 && (
           // 숨은 제스처는 없는 기능이나 마찬가지다. 조용히 알려는 준다.
-          <Text style={[t.meta, { fontSize: 10.5, color: inkA(0.4), textAlign: 'center' }]}>
-            왼쪽으로 밀면 지울 수 있습니다
+          <Text style={[t.meta, { fontSize: 12.5, textAlign: 'center', marginTop: -sp.md }]}>
+            왼쪽으로 밀면 지울 수 있어요
           </Text>
         )}
 
-        <Button label="+ 새 트립" variant="primary" onPress={onNewTrip} />
-
-        <View style={{ marginTop: sp.huge, gap: sp.md, alignItems: 'center' }}>
-          <Pressable hitSlop={10} onPress={() => router.push('/cards')}>
-            <Text style={[t.meta, { color: inkA(0.42) }]}>카드 레이아웃 검증 (개발용)</Text>
-          </Pressable>
-        </View>
+        {/* 개발 빌드에서만 — 테스트하는 지인에게 남의 다이브 8장이 보이면 안 된다 (§7) */}
+        {__DEV__ && (
+          <View style={{ marginTop: sp.lg, alignItems: 'center' }}>
+            <Pressable hitSlop={10} onPress={() => router.push('/cards')}>
+              <Text style={t.meta}>카드 레이아웃 검증 (개발용)</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
+
+      {/* 새 트립은 화면 아래에 고정 — 목록이 길어져도 손이 닿는 자리에 있다 */}
+      <View style={{ paddingHorizontal: sp.xl, paddingTop: sp.sm, paddingBottom: sp.md }}>
+        <Button label="새 트립" variant="primary" icon={<Plus />} onPress={onNewTrip} />
+      </View>
     </SafeAreaView>
   );
 }
+
+/**
+ * 트립 행 왼쪽 타일 — 다이브 수를 담고, 그 트립에서 제일 깊이 간 만큼 어두워진다.
+ * 카드 물기둥과 같은 규칙이다 (§10-⑤): 기준은 절대 수심 40m, 수심을 하나도 안 적었으면
+ * 중립값 0.45. 화면에서도 "깊이 들어간 트립일수록 어둡다"가 읽힌다.
+ */
+function DiveCountTile({ trip }: { trip: Trip }) {
+  const depths = trip.dives.map((d) => d.maxDepth).filter((v): v is number => v != null);
+  const k = depths.length ? Math.min(1, Math.max(...depths) / 40) : 0.45;
+  return (
+    <View
+      style={{
+        width: 48,
+        height: 48,
+        borderRadius: radius.md,
+        backgroundColor: mixHex(hex.mid, hex.abyss, k),
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+      <Text style={[t.rowTitle, { fontSize: 17, color: hex.paper, fontVariant: ['tabular-nums'] }]}>
+        {trip.dives.length}
+      </Text>
+      <Text style={[t.meta, { fontSize: 10, color: paperA(0.8), marginTop: -1 }]}>다이브</Text>
+    </View>
+  );
+}
+
+const mixHex = (a: string, b: string, k: number) => {
+  const ch = (h: string, i: number) => parseInt(h.slice(1 + i * 2, 3 + i * 2), 16);
+  const out = [0, 1, 2].map((i) => Math.round(ch(a, i) + (ch(b, i) - ch(a, i)) * k));
+  return `#${out.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+};

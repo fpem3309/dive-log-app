@@ -11,7 +11,7 @@ import {
 import { Modal, Pressable, Text, View } from 'react-native';
 
 import { Button } from './controls';
-import { radius, sp, surface, t } from './theme';
+import { radius, shadow, sp, surface, t } from './theme';
 
 /**
  * 확인 다이얼로그.
@@ -141,7 +141,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           onPress={() => close(false)}
           style={{
             flex: 1,
-            backgroundColor: 'rgba(10,46,57,0.42)',
+            backgroundColor: surface.scrim,
             justifyContent: 'center',
             padding: sp.xl,
           }}>
@@ -150,18 +150,18 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             onPress={() => {}}
             style={{
               gap: sp.xl,
-              padding: sp.xxl,
-              borderRadius: radius.lg,
-              backgroundColor: surface.sunken,
-              borderWidth: 1,
-              borderColor: surface.line,
+              padding: sp.xl,
+              paddingTop: sp.xxl,
+              borderRadius: radius.xl,
+              backgroundColor: surface.raised,
+              boxShadow: shadow.modal,
             }}>
-            <View style={{ gap: sp.md }}>
+            <View style={{ gap: sp.sm, paddingHorizontal: sp.xs }}>
               <Text style={t.heading}>{req?.title}</Text>
               {!!req?.message && <Text style={t.body}>{req.message}</Text>}
             </View>
 
-            <View style={{ gap: sp.md }}>
+            <View style={{ gap: sp.sm }}>
               <Button
                 label={req?.confirmLabel ?? (req?.notice ? '확인' : '지우기')}
                 variant={req?.destructive ? 'danger' : 'primary'}

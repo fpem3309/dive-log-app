@@ -4,8 +4,8 @@ import { Image, Pressable, Text, View } from 'react-native';
 import { inkA } from '@/design/tokens';
 import { deletePhoto, persistPhoto } from '@/model/photos';
 import type { Dive } from '@/model/types';
-import { Button } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
+import { Camera } from '@/ui/icons';
 import { radius, sp, surface, t } from '@/ui/theme';
 
 /**
@@ -29,7 +29,7 @@ export function PhotoPicker({ photo, onChange, keyId }: Props) {
   const pick = async () => {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      await notify('사진 접근 권한이 필요합니다', '설정에서 사진 접근을 허용해 주세요.');
+      await notify('사진 접근 권한이 필요해요', '설정에서 사진 접근을 허용해 주세요.');
       return;
     }
     /*
@@ -47,7 +47,25 @@ export function PhotoPicker({ photo, onChange, keyId }: Props) {
   };
 
   if (!uri) {
-    return <Button label="사진 고르기" onPress={pick} />;
+    return (
+      <Pressable
+        onPress={pick}
+        accessibilityRole="button"
+        style={({ pressed }) => ({
+          height: 96,
+          borderRadius: 18,
+          borderWidth: 2,
+          borderStyle: 'dashed',
+          borderColor: inkA(0.14),
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+          opacity: pressed ? 0.6 : 1,
+        })}>
+        <Camera />
+        <Text style={[t.meta, { fontSize: 14 }]}>한 장 고르기</Text>
+      </Pressable>
+    );
   }
 
   return (
@@ -59,20 +77,20 @@ export function PhotoPicker({ photo, onChange, keyId }: Props) {
             width: 54,
             height: 96,
             borderRadius: radius.sm,
-            backgroundColor: surface.raised,
+            backgroundColor: surface.field,
           }}
           resizeMode="cover"
         />
       </Pressable>
       <View style={{ flex: 1, gap: sp.sm, alignItems: 'flex-start' }}>
-        <Text style={[t.meta, { fontSize: 11 }]}>탭해서 바꾸기</Text>
+        <Text style={t.meta}>사진을 누르면 바꿀 수 있어요</Text>
         <Pressable
           onPress={() => {
             deletePhoto(uri);
             onChange(undefined);
           }}
           hitSlop={10}>
-          <Text style={[t.chip, { color: inkA(0.55), fontSize: 12.5 }]}>사진 빼기</Text>
+          <Text style={[t.chip, { color: inkA(0.66), fontSize: 14 }]}>사진 빼기</Text>
         </Pressable>
       </View>
     </View>
