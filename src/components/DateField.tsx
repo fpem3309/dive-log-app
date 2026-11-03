@@ -2,10 +2,10 @@ import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/d
 import { useState } from 'react';
 import { Platform, Pressable, Text, View } from 'react-native';
 
-import { hex, inkA } from '@/design/tokens';
+import { hex } from '@/design/tokens';
 import { fromISO, padMD, toISO, weekdayKr } from '@/model/dates';
-import { TextField } from '@/ui/fields';
-import { radius, surface, t } from '@/ui/theme';
+import { fieldBox, TextField } from '@/ui/fields';
+import { radius, t } from '@/ui/theme';
 
 /**
  * 날짜 하나 고르기.
@@ -63,15 +63,10 @@ export function DateField({ value, onChange }: Props) {
     <View style={{ gap: 8 }}>
       <Pressable
         onPress={show}
-        style={({ pressed }) => ({
-          borderBottomWidth: 1,
-          borderBottomColor: open ? surface.accent : surface.fieldLine,
-          paddingBottom: 7,
-          opacity: pressed ? 0.6 : 1,
-        })}>
+        style={({ pressed }) => [fieldBox(open), { opacity: pressed ? 0.6 : 1 }]}>
         <Text style={t.inputNum}>
           {value}
-          <Text style={[t.meta, { fontSize: 12, color: inkA(0.5) }]}>
+          <Text style={[t.meta, { fontSize: 14 }]}>
             {'  '}
             {padMD(value)} {weekdayKr(value)}
           </Text>

@@ -3,7 +3,6 @@ import { useMemo, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { inkA } from '@/design/tokens';
 import { DateField } from '@/components/DateField';
 import { DiveRow } from '@/components/DiveRow';
 import {
@@ -16,10 +15,11 @@ import {
   tripTitle,
 } from '@/model/dates';
 import { useTrips } from '@/store/TripStore';
-import { Button, Chip, Divider, Section } from '@/ui/controls';
+import { Button, Chip, Divider, IconButton, Section } from '@/ui/controls';
 import { useConfirm } from '@/ui/Confirm';
 import { Field, TextField } from '@/ui/fields';
-import { radius, sp, surface, t } from '@/ui/theme';
+import { ChevronLeft, Plus } from '@/ui/icons';
+import { radius, shadow, sp, surface, t } from '@/ui/theme';
 
 /**
  * 트립 상세 — 입력의 중심 화면.
@@ -57,7 +57,7 @@ export default function TripScreen() {
   if (!trip) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: surface.bg, padding: sp.xl, gap: sp.lg }}>
-        <Text style={t.body}>없는 트립입니다.</Text>
+        <Text style={t.body}>없는 트립이에요.</Text>
         <Button label="트립 목록으로" onPress={() => router.replace('/')} />
       </SafeAreaView>
     );
@@ -83,8 +83,8 @@ export default function TripScreen() {
       const days = [...new Set(out.map((d) => padMD(d.date)))];
       const list = days.length > 3 ? `${days.slice(0, 3).join(', ')} 외 ${days.length - 3}일` : days.join(', ');
       void notify(
-        '기간 밖에 남는 다이브가 있습니다',
-        `${list}에 적은 다이브 ${out.length}개가 기간 밖으로 밀려납니다. 그 다이브의 날짜를 먼저 옮기면 기간을 바꿀 수 있습니다.`,
+        '기간 밖에 남는 다이브가 있어요',
+        `${list}에 적은 다이브 ${out.length}개가 기간 밖으로 밀려나요. 그 다이브의 날짜를 먼저 옮기면 기간을 바꿀 수 있어요.`,
       );
       return;
     }
@@ -125,7 +125,7 @@ export default function TripScreen() {
   const confirmDeleteTrip = async () => {
     const ok = await confirm({
       title: '이 트립을 지울까요?',
-      message: `다이브 ${trip.dives.length}개가 함께 사라집니다. 되돌릴 수 없습니다.`,
+      message: `다이브 ${trip.dives.length}개가 함께 사라져요. 되돌릴 수 없어요.`,
       destructive: true,
     });
     if (ok) {
@@ -142,43 +142,61 @@ export default function TripScreen() {
         <ScrollView
           contentContainerStyle={{ padding: sp.xl, paddingBottom: 96, gap: sp.xl }}
           keyboardShouldPersistTaps="handled">
-          <Pressable hitSlop={10} onPress={() => router.push('/')}>
-            <Text style={[t.meta, { color: surface.accent }]}>‹ 트립 목록</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <IconButton label="트립 목록으로" onPress={() => router.push('/')}>
+              <ChevronLeft />
+            </IconButton>
+            {!editHeader && (
+              <Pressable
+                onPress={() => setEditHeader(true)}
+                hitSlop={{ top: 4, bottom: 4 }}
+                accessibilityRole="button"
+                style={({ pressed }) => ({
+                  height: 40,
+                  paddingHorizontal: sp.lg,
+                  justifyContent: 'center',
+                  borderRadius: radius.pill,
+                  backgroundColor: surface.raised,
+                  boxShadow: shadow.raised,
+                  opacity: pressed ? 0.6 : 1,
+                })}>
+                <Text style={[t.chip, { fontSize: 14 }]}>트립 고치기</Text>
+              </Pressable>
+            )}
+          </View>
 
           {/*
             ---------- 트립 머리 ----------
-            장소는 장소끼리, 숫자는 숫자끼리 묶는다. 기간은 날짜 범위가 이미 말해 주므로
+            장소는 장소끼리, 날짜는 날짜끼리 태그로 나눈다. 기간은 날짜 범위가 이미 말해 주므로
             "2박"을 덧붙이지 않는다 (한 줄에 같은 말을 두 번 하고 있었다).
+            제목 자체도 누르면 고치기가 열린다 — 위 버튼을 못 본 사람도 닿는다.
           */}
           {!editHeader ? (
-            <Pressable onPress={() => setEditHeader(true)} style={{ gap: 6 }}>
+            <Pressable onPress={() => setEditHeader(true)} style={{ gap: 10, paddingHorizontal: sp.xs }}>
               <Text style={t.title}>{tripTitle(trip)}</Text>
-              {!!trip.region && <Text style={t.meta}>{trip.region}</Text>}
-              <Text style={t.meta}>
-                {dateRange(trip.startDate, trip.endDate)}
-                {`  ·  다이브 ${trip.dives.length}`}
-              </Text>
-              <Text style={[t.meta, { color: surface.accent, fontSize: 10.5 }]}>탭해서 고치기</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                {!!trip.region && <Tag label={trip.region} />}
+                <Tag label={dateRange(trip.startDate, trip.endDate)} />
+              </View>
             </Pressable>
           ) : (
             <View
               style={{
                 gap: sp.lg,
                 padding: sp.lg,
-                borderRadius: radius.lg,
-                backgroundColor: surface.sunken,
-                borderWidth: 1,
-                borderColor: surface.line,
+                paddingTop: sp.xl,
+                borderRadius: radius.xl,
+                backgroundColor: surface.raised,
+                boxShadow: shadow.raised,
               }}>
-              <Field label="제목" hint="비우면 자동으로 지어집니다">
+              <Field label="제목" hint="비우면 자동으로 지어져요">
                 <TextField
                   value={trip.title}
                   onChangeText={(v) => updateTrip(trip.id, { title: v })}
                   placeholder={autoTripTitle(trip.region, trip.startDate, trip.endDate)}
                 />
               </Field>
-              <Field label="지역" hint="카드에 올라갑니다">
+              <Field label="지역" hint="카드에 올라가요">
                 <TextField
                   value={trip.region}
                   onChangeText={(v) => updateTrip(trip.id, { region: v })}
@@ -194,7 +212,7 @@ export default function TripScreen() {
               </Field>
               <Field
                 label="기간"
-                hint={lastDiveDate ? `${padMD(lastDiveDate)}까지 다이브가 적혀 있습니다` : undefined}>
+                hint={lastDiveDate ? `${padMD(lastDiveDate)}까지 다이브가 적혀 있어요` : undefined}>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: sp.sm }}>
                   {NIGHTS.map((n) => (
                     <Chip
@@ -208,7 +226,7 @@ export default function TripScreen() {
                 </View>
               </Field>
               <Divider />
-              <View style={{ flexDirection: 'row', gap: sp.md }}>
+              <View style={{ flexDirection: 'row', gap: sp.sm }}>
                 <Button
                   label="완료"
                   variant="primary"
@@ -223,59 +241,61 @@ export default function TripScreen() {
           {/* ---------- 다이브 목록 ---------- */}
           <Section label={trip.dives.length > 0 ? `다이브 ${trip.dives.length}개` : '다이브'}>
             {dives.length === 0 ? (
-              <Text style={t.body}>
-                아직 없습니다. 아래에서 하나 추가하세요. 날짜·장소·종목만 있으면 됩니다.
+              <Text style={[t.body, { paddingHorizontal: sp.xs }]}>
+                아직 없어요. 아래에서 하나 추가하세요. 날짜·장소·종목만 있으면 돼요.
               </Text>
             ) : (
-              <View
-                style={{
-                  borderRadius: radius.lg,
-                  backgroundColor: surface.raised,
-                  borderWidth: 1,
-                  borderColor: surface.line,
-                  overflow: 'hidden',
-                }}>
+              <View style={{ gap: 10 }}>
                 {dives.map((d, i) => (
-                  <View key={d.id}>
-                    {i > 0 && expandedId !== d.id && expandedId !== dives[i - 1]?.id && (
-                      <Divider style={{ marginHorizontal: sp.md }} />
-                    )}
-                    <DiveRow
-                      trip={trip}
-                      dive={d}
-                      ordinal={i + 1}
-                      diveNumber={diveNumbers.get(d.id)}
-                      expanded={expandedId === d.id}
-                      onToggle={() => setExpandedId((cur) => (cur === d.id ? null : d.id))}
-                    />
-                  </View>
+                  <DiveRow
+                    key={d.id}
+                    trip={trip}
+                    dive={d}
+                    ordinal={i + 1}
+                    diveNumber={diveNumbers.get(d.id)}
+                    expanded={expandedId === d.id}
+                    onToggle={() => setExpandedId((cur) => (cur === d.id ? null : d.id))}
+                  />
                 ))}
               </View>
             )}
 
-            <Button label="+ 다이브 추가" variant="primary" onPress={onAddDive} />
+            <Button
+              label="다이브 추가"
+              variant="add"
+              icon={<Plus color={surface.accent} />}
+              onPress={onAddDive}
+            />
           </Section>
 
           {trip.dives.length > 0 && (
-            <Pressable
+            <Button
+              label="카드 보기 · 저장"
+              variant="primary"
               onPress={() => router.push(`/trip/${trip.id}/cards`)}
-              style={({ pressed }) => ({
-                paddingVertical: 14,
-                alignItems: 'center',
-                borderRadius: radius.pill,
-                borderWidth: 1,
-                borderColor: 'rgba(29,95,176,0.45)',
-                opacity: pressed ? 0.6 : 1,
-              })}>
-                            <Text style={[t.button, { color: surface.accent }]}>카드 보기 · 저장</Text>
-            </Pressable>
+            />
           )}
 
-          <Text style={[t.meta, { fontSize: 10.5, color: inkA(0.4), textAlign: 'center' }]}>
-            적은 내용은 이 기기에만 저장됩니다
+          <Text style={[t.meta, { fontSize: 12.5, textAlign: 'center' }]}>
+            적은 내용은 이 기기에만 저장돼요
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
+  );
+}
+
+/** 트립 머리의 지역·날짜 — 점 체인으로 늘어놓지 않고 알약으로 나눈다 (§10-㉑) */
+function Tag({ label }: { label: string }) {
+  return (
+    <View
+      style={{
+        paddingVertical: 5,
+        paddingHorizontal: 11,
+        borderRadius: radius.pill,
+        backgroundColor: surface.tint,
+      }}>
+      <Text style={[t.meta, { color: t.rowTitle.color }]}>{label}</Text>
+    </View>
   );
 }

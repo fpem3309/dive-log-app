@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Modal, Text, View } from 'react-native';
 
-import { inkA } from '@/design/tokens';
 import { useTrips } from '@/store/TripStore';
 import { Button } from '@/ui/controls';
 import { Field, NumberField } from '@/ui/fields';
-import { radius, sp, surface, t } from '@/ui/theme';
+import { radius, shadow, sp, surface, t } from '@/ui/theme';
 
 /**
  * 한 번만 묻는 것 — 지금까지 몇 번 하셨어요?
@@ -31,33 +30,39 @@ export function Onboarding() {
       <View
         style={{
           flex: 1,
-          backgroundColor: 'rgba(10,46,57,0.42)',
+          backgroundColor: surface.scrim,
           justifyContent: 'center',
           padding: sp.xl,
         }}>
         <View
           style={{
             gap: sp.xl,
-            padding: sp.xxl,
-            borderRadius: radius.lg,
-            backgroundColor: surface.sunken,
-            borderWidth: 1,
-            borderColor: surface.line,
+            padding: sp.xl,
+            paddingTop: sp.xxl,
+            borderRadius: radius.xl,
+            backgroundColor: surface.raised,
+            boxShadow: shadow.modal,
           }}>
-          <View style={{ gap: sp.md }}>
-            <Text style={t.eyebrow}>딱 하나만</Text>
-            <Text style={t.title}>지금까지 몇 번 하셨어요?</Text>
+          <View style={{ gap: sp.sm, paddingHorizontal: sp.xs }}>
+            <Text style={t.title}>지금까지 몇 번{'\n'}다이빙하셨어요?</Text>
             <Text style={t.body}>
-              스쿠버 누적 횟수예요. 여기서부터 이어서 셉니다.{'\n'}
-              안 세셨으면 건너뛰어도 됩니다 — 나중에 바꿀 수 있어요.
+              스쿠버 누적 횟수예요. 여기서부터 이어서 셀게요.{'\n'}
+              안 세셨으면 건너뛰어도 돼요 — 나중에 바꿀 수 있어요.
             </Text>
           </View>
 
-          <Field label="지금까지" hint="대충이어도 괜찮습니다">
-            <NumberField value={value} onChangeText={setValue} unit="번" placeholder="300" />
+          <Field label="지금까지" hint="대충이어도 괜찮아요">
+            <NumberField
+              value={value}
+              onChangeText={setValue}
+              unit="번"
+              placeholder="300"
+              style={{ minHeight: 68, borderRadius: 20, paddingHorizontal: 20 }}
+              big
+            />
           </Field>
 
-          <View style={{ gap: sp.md }}>
+          <View style={{ gap: sp.sm }}>
             <Button
               label={value.trim() ? `${value}번부터 시작` : '1번부터 시작'}
               variant="primary"
@@ -67,8 +72,8 @@ export function Onboarding() {
           </View>
 
           {trips.length > 0 && (
-            <Text style={[t.meta, { color: inkA(0.42), fontSize: 10.5 }]}>
-              이미 적어 둔 로그가 있으면 번호는 날짜순으로 다시 매겨집니다
+            <Text style={[t.meta, { fontSize: 12, paddingHorizontal: sp.xs }]}>
+              이미 적어 둔 로그가 있으면 번호는 날짜순으로 다시 매겨져요
             </Text>
           )}
         </View>

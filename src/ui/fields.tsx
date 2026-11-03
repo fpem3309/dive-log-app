@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Text, TextInput, View, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { inkA } from '@/design/tokens';
-import { sp, surface, t } from './theme';
+import { radius, sp, surface, t } from './theme';
 
 /**
  * 입력 필드.
@@ -26,21 +26,32 @@ export function Field({
   return (
     // minWidth:0 — 가로로 나란히 놓았을 때 칸이 안 줄어들어 단위가 밖으로 밀리는 걸 막는다.
     // (RN에서는 기본값이지만 react-native-web은 CSS min-width:auto를 따라간다)
-    <View style={[{ gap: 7, minWidth: 0 }, style]}>
-      <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: sp.sm }}>
+    <View style={[{ gap: sp.sm, minWidth: 0 }, style]}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'baseline', gap: sp.sm, paddingHorizontal: sp.xs }}>
         <Text style={t.label}>{label}</Text>
-        {!!hint && <Text style={[t.meta, { fontSize: 10.5 }]}>{hint}</Text>}
+        {!!hint && (
+          <Text style={[t.meta, { fontSize: 12, flex: 1, minWidth: 0 }]}>{hint}</Text>
+        )}
       </View>
       {children}
     </View>
   );
 }
 
-function underline(focused: boolean): ViewStyle {
+/**
+ * 입력칸은 밑줄이 아니라 채운 면이다. 포커스는 테두리 2px로 — 테두리를 항상 두고 색만
+ * 바꿔야 포커스할 때 칸이 2px씩 움직이지 않는다.
+ */
+export function fieldBox(focused: boolean): ViewStyle {
   return {
-    borderBottomWidth: 1,
-    borderBottomColor: focused ? surface.accent : surface.fieldLine,
-    paddingBottom: 7,
+    minHeight: 52,
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    borderRadius: radius.md,
+    borderWidth: 2,
+    borderColor: focused ? surface.accent : 'transparent',
+    backgroundColor: surface.field,
   };
 }
 
@@ -58,15 +69,25 @@ export function TextField({
 } & Omit<TextInputProps, 'style' | 'value' | 'onChangeText' | 'placeholder'>) {
   const [focused, setFocused] = useState(false);
   return (
-    <View style={[underline(focused), { minWidth: 0 }, style]}>
+    <View
+      style={[
+        fieldBox(focused),
+        { minWidth: 0 },
+        rest.multiline && { minHeight: 88, justifyContent: 'flex-start', paddingVertical: 12 },
+        style,
+      ]}>
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={inkA(0.3)}
+        placeholderTextColor={inkA(0.36)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={[t.input, { padding: 0, minWidth: 0 }]}
+        style={[
+          t.input,
+          { padding: 0, minWidth: 0 },
+          rest.multiline && { lineHeight: 23, textAlignVertical: 'top' },
+        ]}
         {...rest}
       />
     </View>
@@ -85,6 +106,7 @@ export function NumberField({
   decimal,
   maxLength = 6,
   style,
+  big,
 }: {
   value: string;
   onChangeText: (v: string) => void;
@@ -93,6 +115,8 @@ export function NumberField({
   decimal?: boolean;
   maxLength?: number;
   style?: ViewStyle;
+  /** 온보딩처럼 숫자 하나만 묻는 화면 */
+  big?: boolean;
 }) {
   const [focused, setFocused] = useState(false);
   const clean = (raw: string) => {
@@ -106,24 +130,28 @@ export function NumberField({
   return (
     <View
       style={[
-        underline(focused),
-        { flexDirection: 'row', alignItems: 'baseline', minWidth: 0 },
+        fieldBox(focused),
+        { flexDirection: 'row', alignItems: 'center', minWidth: 0 },
         style,
       ]}>
       <TextInput
         value={value}
         onChangeText={(v) => onChangeText(clean(v))}
         placeholder={placeholder}
-        placeholderTextColor={inkA(0.26)}
+        placeholderTextColor={inkA(0.32)}
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}
         inputMode={decimal ? 'decimal' : 'numeric'}
         maxLength={maxLength}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        style={[t.inputNum, { padding: 0, flex: 1, minWidth: 0 }]}
+        style={[
+          t.inputNum,
+          { padding: 0, flex: 1, minWidth: 0 },
+          big && { fontSize: 30, letterSpacing: -0.6 },
+        ]}
       />
       {!!unit && (
-        <Text style={[t.meta, { fontSize: 12, color: inkA(0.5), marginLeft: 4 }]}>{unit}</Text>
+        <Text style={[t.meta, { fontSize: big ? 18 : 14, marginLeft: 4 }]}>{unit}</Text>
       )}
     </View>
   );

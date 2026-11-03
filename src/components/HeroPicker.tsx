@@ -4,7 +4,7 @@ import { hasHangul } from '@/design/type';
 import { heroLabel, resolveHero, type HeroKind } from '@/model/chooseHero';
 import type { Dive } from '@/model/types';
 import { Chip } from '@/ui/controls';
-import { radius, sp, surface } from '@/ui/theme';
+import { sp, surface } from '@/ui/theme';
 
 /**
  * 카드 주인공 후보 트레이 — §3 "사용자가 카드에서 탭해서 바꿀 수 있게 한다".
@@ -36,10 +36,8 @@ export function HeroPicker({ dive, candidates, width, onSelect }: Props) {
         // "이건 저 카드의 것이지 버튼의 것이 아니다"를 간격이 말한다.
         marginTop: -sp.xs,
         marginBottom: sp.xs,
-        backgroundColor: surface.sunken,
-        borderWidth: 1,
-        borderColor: surface.line,
-        borderRadius: radius.md,
+        backgroundColor: surface.tint,
+        borderRadius: 18,
         padding: sp.md,
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -57,8 +55,7 @@ export function HeroPicker({ dive, candidates, width, onSelect }: Props) {
             // 트레이 좌우 패딩을 뺀 나머지. 넘치면 한 줄 말줄임 — 2줄 칩을 만들면
             // 칩 높이가 제각각이 되어 줄이 울퉁불퉁해진다.
             maxWidth={width - sp.md * 2}
-            // mono에 한글 글리프가 없다 (§10-⑫). "38m"은 계기판 결로, "313번째"·
-            // "가시해마"는 Pretendard로 받는다. 여기서는 자동 판정한다.
+            // 숫자만 있는 후보("38m")는 고정폭 숫자로 받는다
             mono={!hasHangul(label)}
             onPress={() => onSelect(kind)}
             testID={`hero-chip-${dive.id}-${kind}`}

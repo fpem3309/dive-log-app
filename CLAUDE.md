@@ -147,6 +147,20 @@ type Sighting = {
   **코럴은 결과물에만** 쓴다 — 카드가 배경에서 더 떠 보인다.
 - 한 곳 규칙은 **카드에만** 적용된다. 화면에서는 하트와 "카드 보기" 버튼이 쓴다.
 
+**화면은 둥글고 부드럽게 간다 — mono·밑줄·테두리는 카드의 것이다.** (2026-11-04)
+화면에도 대문자+넓은 자간 mono 라벨(`MAX DEPTH`), 밑줄 입력칸, 1px 테두리, "~습니다" 말투를
+썼더니 계기판·문서처럼 딱딱했다. 계기판 질감은 결과물(카드)에만 남기고 화면은 이렇게 간다:
+- 글자는 **Pretendard 하나**. 숫자는 `fontVariant: ['tabular-nums']`로 열을 맞춘다 (`t.meta`·`t.chipMono`).
+- 입력칸은 **채운 면**(`surface.field`, 모서리 16, 높이 52). 포커스는 테두리 2px — 항상 두고 색만 바꾼다.
+- 떠 있는 면은 **테두리 대신 그림자**(`shadow.raised`, RN `boxShadow`). 모서리는 안쪽일수록 작게:
+  입력칸 16 < 목록 행 22 < 편집기·모달 26. 그림자와 클리핑은 두 겹으로 (`Raised`).
+- 말투는 **"~요"**. 보조 글자는 `inkA(0.66)` 아래로 내리지 않는다 (0.6이면 13px에서 대비 4.0).
+- 트립 행 왼쪽 타일은 그 트립의 최대 수심만큼 어두워진다 — 물기둥과 같은 규칙(§10-⑤).
+- 시안: https://claude.ai/artifact/AUxcrSfrn7tVSREcQ3jdjV
+- ⚠️ `src/ui/controls.tsx`는 `./icons`(react-native-svg)를 import하면 안 된다. `Confirm`이 거기서
+  `Button`을 가져오고 `confirm.test.tsx`가 그걸 렌더하는데, react-native-svg는 vitest에서 안 뜬다.
+  아이콘은 호출부가 `icon` prop으로 넘긴다.
+
 **액센트(`--point`)는 카드당 한 군데만.** 여기저기 쓰면 시선이 흩어진다.
 `accentTarget()`이 수심 마크와 kicker 중 한 곳에만 배정한다.
 
